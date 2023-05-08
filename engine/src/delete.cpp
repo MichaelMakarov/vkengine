@@ -82,3 +82,9 @@ void std::default_delete<framebuffer_t>::operator()(VkFramebuffer framebuffer) c
     std::cout << "Framebuffer deletion." << std::endl;
     vkDestroyFramebuffer(device.get(), framebuffer, nullptr);
 }
+
+void std::default_delete<shader_module_t>::operator()(VkShaderModule shader_module) const
+{
+    std::cout << "Shader module deletion." << std::endl;
+    vkDestroyShaderModule(device.get(), shader_module, nullptr);
+}

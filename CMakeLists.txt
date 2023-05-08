@@ -8,7 +8,6 @@ find_package(GLFW3 REQUIRED)
 find_package(GLM REQUIRED)
 
 subdirs(
-    utility
     engine
-    app1
+    examples
 )

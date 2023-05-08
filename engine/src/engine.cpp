@@ -1,13 +1,12 @@
-#include <engine.hpp>
 #include <renderer.hpp>
 
-std::shared_ptr<engine> const &engine::get_engine()
+std::shared_ptr<engine> engine::make_engine(unsigned w, unsigned h, char const *title)
 {
-    static std::shared_ptr<engine> _engine{new engine};
+    static std::shared_ptr<engine> _engine{new engine(w, h, title)};
     return _engine;
 }
 
-engine::engine() : _renderer{new renderer}
+engine::engine(unsigned w, unsigned h, char const *title) : _renderer{new renderer(w, h, title)}
 {
 }
 
@@ -16,7 +15,11 @@ engine::~engine()
     delete _renderer;
 }
 
-void engine::run(unsigned w, unsigned h, char const *title)
+void engine::run()
 {
-    _renderer->run(w, h, title);
+    _renderer->run();
+}
+
+void engine::add_shader(shader_info const &info)
+{
 }

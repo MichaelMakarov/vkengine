@@ -1,8 +1,7 @@
 add_executable(
-    app1 
+    colored_window 
     src/main.cpp
 )
 target_link_libraries(
-    app1 PRIVATE
-    engine
+    colored_window PRIVATE engine
 )

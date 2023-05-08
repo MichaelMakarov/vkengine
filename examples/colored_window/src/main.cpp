@@ -6,8 +6,7 @@ int main()
 
     try
     {
-        auto e = engine::get_engine();
-        e->run(600, 600, "Application 1 window");
+        engine::make_engine(600, 600, "Application 1 window")->run();
     }
     catch (const std::exception &ex)
     {

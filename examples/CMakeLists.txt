@@ -1,0 +1,3 @@
+subdirs(
+    colored_window
+)

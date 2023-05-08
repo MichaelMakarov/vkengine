@@ -52,19 +52,21 @@ namespace
     }
 }
 
-renderer::renderer() = default;
+renderer::renderer(int w, int h, char const *title)
+{
+    _wnd.reset(create_window(w, h, title));
+    create_core();
+    on_window_resized(w, h);
+    resize_func = std::bind(&renderer::on_window_resized, this, _1, _2);
+}
 
 renderer::~renderer()
 {
     clear_framebuffers();
 }
 
-void renderer::run(int w, int h, char const *title)
+void renderer::run()
 {
-    _wnd.reset(create_window(w, h, title));
-    create_core();
-    on_window_resized(w, h);
-    resize_func = std::bind(&renderer::on_window_resized, this, _1, _2);
     while (!glfwWindowShouldClose(_wnd.get()))
     {
         glfwPollEvents();
@@ -144,6 +146,7 @@ void renderer::on_window_resized(int w, int h)
 {
     _extent.width = static_cast<uint32_t>(w);
     _extent.height = static_cast<uint32_t>(h);
+    create_swapchain();
     create_pipeline();
     set_draw_commands();
 }

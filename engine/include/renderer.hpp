@@ -1,7 +1,7 @@
 #pragma once
 #include <vulkan/vulkan.h>
+#include <engine.hpp>
 #include <error.hpp>
-#include <memory>
 #include <vector>
 
 #define vk_assert(res, msg) \
@@ -120,6 +120,14 @@ struct std::default_delete<semaphore_t>
     void operator()(VkSemaphore) const;
 };
 
+using shader_module_t = ptr_value_type<VkShaderModule>;
+template <>
+struct std::default_delete<shader_module_t>
+{
+    std::shared_ptr<device_t> device;
+    void operator()(VkShaderModule) const;
+};
+
 struct device_properties
 {
     uint32_t graphics_qfm;
@@ -162,8 +170,9 @@ class renderer
     VkQueue _transfer_queue;
     std::size_t _frame_index{};
     uint32_t _image_index;
-    std::vector<VkDescriptorSetLayout> _descset_layouts;
+    std::vector<VkDescriptorSetLayout> _set_layouts;
     std::vector<VkPipelineShaderStageCreateInfo> _shader_stages;
+    std::vector<std::unique_ptr<shader_module_t>> _shader_modules;
 
     std::unique_ptr<GLFWwindow> _wnd;
     std::shared_ptr<instance_t> _instance;
@@ -171,10 +180,10 @@ class renderer
     std::shared_ptr<surface_t> _surface;
     std::shared_ptr<device_t> _device;
 
-    std::shared_ptr<swapchain_t> _swapchain;
-    std::shared_ptr<pipeline_layout_t> _pipeline_layout;
-    std::shared_ptr<render_pass_t> _render_pass;
-    std::shared_ptr<pipeline_t> _pipeline;
+    std::unique_ptr<swapchain_t> _swapchain;
+    std::unique_ptr<pipeline_layout_t> _pipeline_layout;
+    std::unique_ptr<render_pass_t> _render_pass;
+    std::unique_ptr<pipeline_t> _pipeline;
     std::unique_ptr<command_pool_t> _frame_cmdpool;
     std::vector<std::shared_ptr<image_view_t>> _image_views;
     std::vector<std::shared_ptr<framebuffer_t>> _framebuffers;
@@ -189,12 +198,14 @@ class renderer
     std::vector<copy_descriptor> _copy_descriptors;
 
 public:
-    renderer();
+    renderer(int w, int h, char const *title);
     ~renderer();
-    void run(int w, int h, char const *title);
+    void run();
+    void add_shader(shader_info const &info);
 
 private:
     void create_core();
+    void create_swapchain();
     void create_pipeline();
     void on_window_resized(int w, int h);
     void draw_frame();
