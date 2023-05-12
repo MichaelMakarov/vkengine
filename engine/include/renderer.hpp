@@ -141,6 +141,34 @@ struct device_properties
     device_properties &operator=(device_properties const &) = default;
 };
 
+struct pipeline_drawer
+{
+    virtual ~pipeline_drawer() = default;
+    virtual void draw_command(VkCommandBuffer) = 0;
+    virtual void set_pipeline(std::unique_ptr<pipeline_t> &&) = 0;
+};
+
+struct pipeline_builder
+{
+    VkViewport viewport;
+    VkRect2D scissor;
+    VkPipelineRasterizationStateCreateInfo rasterization_state;
+    VkPipelineMultisampleStateCreateInfo multisample_state;
+    VkPipelineColorBlendAttachmentState attachment_state;
+    VkPipelineVertexInputStateCreateInfo vertex_input_state;
+    VkPipelineInputAssemblyStateCreateInfo input_assembly_state;
+    VkPipelineLayout pipeline_layout;
+    VkRenderPass render_pass;
+    std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
+
+    pipeline_builder();
+    pipeline_builder(pipeline_builder const &) = default;
+    pipeline_builder(pipeline_builder &&) noexcept;
+    pipeline_builder &operator=(pipeline_builder const &) = default;
+    pipeline_builder &operator=(pipeline_builder &&) noexcept;
+    std::unique_ptr<pipeline_t> create_pipeline(std::shared_ptr<device_t> const &device) const;
+};
+
 struct copy_descriptor
 {
     VkBuffer srcbuf, dstbuf;
@@ -169,10 +197,6 @@ class renderer
     VkQueue _present_queue;
     VkQueue _transfer_queue;
     std::size_t _frame_index{};
-    uint32_t _image_index;
-    std::vector<VkDescriptorSetLayout> _set_layouts;
-    std::vector<VkPipelineShaderStageCreateInfo> _shader_stages;
-    std::vector<std::unique_ptr<shader_module_t>> _shader_modules;
 
     std::unique_ptr<GLFWwindow> _wnd;
     std::shared_ptr<instance_t> _instance;
@@ -181,9 +205,7 @@ class renderer
     std::shared_ptr<device_t> _device;
 
     std::unique_ptr<swapchain_t> _swapchain;
-    std::unique_ptr<pipeline_layout_t> _pipeline_layout;
     std::unique_ptr<render_pass_t> _render_pass;
-    std::unique_ptr<pipeline_t> _pipeline;
     std::unique_ptr<command_pool_t> _frame_cmdpool;
     std::vector<std::shared_ptr<image_view_t>> _image_views;
     std::vector<std::shared_ptr<framebuffer_t>> _framebuffers;
@@ -191,6 +213,9 @@ class renderer
     std::vector<std::unique_ptr<semaphore_t>> _frame_submit_semaphores;
     std::vector<std::unique_ptr<semaphore_t>> _frame_present_semaphores;
     std::vector<VkCommandBuffer> _frame_cmdbuffers;
+
+    std::vector<std::unique_ptr<pipeline_drawer>> _pipeline_drawers;
+    std::vector<pipeline_builder> _pipeline_builders;
 
     std::unique_ptr<command_pool_t> _copy_cmdpool;
     std::unique_ptr<fence_t> _copy_sync_fence;
@@ -201,7 +226,7 @@ public:
     renderer(int w, int h, char const *title);
     ~renderer();
     void run();
-    void add_shader(shader_info const &info);
+    void add_shader(std::string const &vsfilename, std::string fsfilename);
 
 private:
     void create_core();

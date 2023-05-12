@@ -19,18 +19,22 @@ std::shared_ptr<instance_t> make_instance()
     layers.push_back("VK_LAYER_KHRONOS_validation");
 #endif
 
-    VkApplicationInfo appinfo{.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-                              .pApplicationName = "",
-                              .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
-                              .pEngineName = "vkengine",
-                              .engineVersion = VK_MAKE_VERSION(1, 0, 0),
-                              .apiVersion = VK_API_VERSION_1_2};
-    VkInstanceCreateInfo instinfo{.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
-                                  .pApplicationInfo = &appinfo,
-                                  .enabledLayerCount = static_cast<unsigned>(layers.size()),
-                                  .ppEnabledLayerNames = layers.data(),
-                                  .enabledExtensionCount = static_cast<unsigned>(extensions.size()),
-                                  .ppEnabledExtensionNames = extensions.data()};
+    VkApplicationInfo appinfo{
+        .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
+        .pApplicationName = "",
+        .applicationVersion = VK_MAKE_VERSION(1, 0, 0),
+        .pEngineName = "vkengine",
+        .engineVersion = VK_MAKE_VERSION(1, 0, 0),
+        .apiVersion = VK_API_VERSION_1_2,
+    };
+    VkInstanceCreateInfo instinfo{
+        .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+        .pApplicationInfo = &appinfo,
+        .enabledLayerCount = static_cast<unsigned>(layers.size()),
+        .ppEnabledLayerNames = layers.data(),
+        .enabledExtensionCount = static_cast<unsigned>(extensions.size()),
+        .ppEnabledExtensionNames = extensions.data(),
+    };
 
     VkInstance inst;
     vk_assert(vkCreateInstance(&instinfo, nullptr, &inst), "Failed to create instance.");
@@ -58,11 +62,13 @@ std::shared_ptr<debug_messenger_t> make_debug_messenger(std::shared_ptr<instance
     VkDebugUtilsMessageTypeFlagsEXT type = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
                                            VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
                                            VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    VkDebugUtilsMessengerCreateInfoEXT info{.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
-                                            .messageSeverity = severity,
-                                            .messageType = type,
-                                            .pfnUserCallback = &debug_callback,
-                                            .pUserData = nullptr};
+    VkDebugUtilsMessengerCreateInfoEXT info{
+        .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+        .messageSeverity = severity,
+        .messageType = type,
+        .pfnUserCallback = &debug_callback,
+        .pUserData = nullptr,
+    };
     auto func = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(vkGetInstanceProcAddr(instance.get(), "vkCreateDebugUtilsMessengerEXT"));
     auto result = VK_ERROR_EXTENSION_NOT_PRESENT;
     VkDebugUtilsMessengerEXT messenger;
@@ -230,12 +236,14 @@ std::shared_ptr<device_t> make_device(VkPhysicalDevice phys, std::set<uint32_t> 
                    });
     VkPhysicalDeviceFeatures features{};
     char const *extension_names[]{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-    VkDeviceCreateInfo info{.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-                            .queueCreateInfoCount = static_cast<uint32_t>(queue_infos.size()),
-                            .pQueueCreateInfos = queue_infos.data(),
-                            .enabledExtensionCount = 1,
-                            .ppEnabledExtensionNames = extension_names,
-                            .pEnabledFeatures = &features};
+    VkDeviceCreateInfo info{
+        .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
+        .queueCreateInfoCount = static_cast<uint32_t>(queue_infos.size()),
+        .pQueueCreateInfos = queue_infos.data(),
+        .enabledExtensionCount = 1,
+        .ppEnabledExtensionNames = extension_names,
+        .pEnabledFeatures = &features,
+    };
     VkDevice device;
     vk_assert(vkCreateDevice(phys, &info, nullptr, &device), "Failed to create a device.");
     return std::shared_ptr<device_t>(device, std::default_delete<device_t>{});

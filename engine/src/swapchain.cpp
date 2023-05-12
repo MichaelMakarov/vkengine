@@ -71,19 +71,21 @@ auto make_swapchain(VkPhysicalDevice physdevice,
     get_swapchain_extent(capabilities, extent);
     // кол-во изображений не должно превосходить допустимое кол-во изображений
     count = std::min(capabilities.maxImageCount, capabilities.minImageCount + 1);
-    VkSwapchainCreateInfoKHR info{.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
-                                  .surface = surface.get(),
-                                  .minImageCount = count,
-                                  .imageFormat = format.format,
-                                  .imageColorSpace = format.colorSpace,
-                                  .imageExtent = extent,
-                                  .imageArrayLayers = 1,
-                                  .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                                  .preTransform = capabilities.currentTransform,
-                                  .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-                                  .presentMode = mode,
-                                  .clipped = VK_TRUE,
-                                  .oldSwapchain = nullptr};
+    VkSwapchainCreateInfoKHR info{
+        .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
+        .surface = surface.get(),
+        .minImageCount = count,
+        .imageFormat = format.format,
+        .imageColorSpace = format.colorSpace,
+        .imageExtent = extent,
+        .imageArrayLayers = 1,
+        .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+        .preTransform = capabilities.currentTransform,
+        .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
+        .presentMode = mode,
+        .clipped = VK_TRUE,
+        .oldSwapchain = nullptr,
+    };
     VkSwapchainKHR swapchain;
     if (graphics_qfm != present_qfm)
     {
@@ -104,32 +106,42 @@ auto make_swapchain(VkPhysicalDevice physdevice,
 
 auto make_render_pass(std::shared_ptr<device_t> const &device, VkFormat format)
 {
-    VkAttachmentDescription attachment_desc{.format = format,
-                                            .samples = VK_SAMPLE_COUNT_1_BIT,
-                                            .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-                                            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                                            .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-                                            .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-                                            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                                            .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR};
-    VkAttachmentReference attachment_ref{.attachment = 0,
-                                         .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
-    VkSubpassDescription subpass_desc{.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                      .colorAttachmentCount = 1,
-                                      .pColorAttachments = &attachment_ref};
-    VkSubpassDependency dependency{.srcSubpass = VK_SUBPASS_EXTERNAL,
-                                   .dstSubpass = 0,
-                                   .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                                   .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-                                   .srcAccessMask = 0,
-                                   .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT};
-    VkRenderPassCreateInfo info{.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-                                .attachmentCount = 1,
-                                .pAttachments = &attachment_desc,
-                                .subpassCount = 1,
-                                .pSubpasses = &subpass_desc,
-                                .dependencyCount = 1,
-                                .pDependencies = &dependency};
+    VkAttachmentDescription attachment{
+        .format = format,
+        .samples = VK_SAMPLE_COUNT_1_BIT,
+        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
+        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+    };
+    VkAttachmentReference color_attachment{
+        .attachment = 0,
+        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+    };
+    VkSubpassDescription subpass{
+        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
+        .colorAttachmentCount = 1,
+        .pColorAttachments = &color_attachment,
+    };
+    VkSubpassDependency dependency{
+        .srcSubpass = VK_SUBPASS_EXTERNAL,
+        .dstSubpass = 0,
+        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+        .srcAccessMask = 0,
+        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+    };
+    VkRenderPassCreateInfo info{
+        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
+        .attachmentCount = 1,
+        .pAttachments = &attachment,
+        .subpassCount = 1,
+        .pSubpasses = &subpass,
+        .dependencyCount = 1,
+        .pDependencies = &dependency,
+    };
     VkRenderPass render_pass;
     vk_assert(vkCreateRenderPass(device.get(), &info, nullptr, &render_pass), "Failed to create render pass.");
     return std::unique_ptr<render_pass_t>(render_pass, std::default_delete<render_pass_t>{device});
@@ -137,21 +149,24 @@ auto make_render_pass(std::shared_ptr<device_t> const &device, VkFormat format)
 
 auto make_image_view(std::shared_ptr<device_t> const &device, VkImage image, VkFormat format)
 {
-    VkComponentMapping components{.r = VK_COMPONENT_SWIZZLE_IDENTITY,
-                                  .g = VK_COMPONENT_SWIZZLE_IDENTITY,
-                                  .b = VK_COMPONENT_SWIZZLE_IDENTITY,
-                                  .a = VK_COMPONENT_SWIZZLE_IDENTITY};
-    VkImageSubresourceRange range{.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-                                  .baseMipLevel = 0,
-                                  .levelCount = 1,
-                                  .baseArrayLayer = 0,
-                                  .layerCount = 1};
-    VkImageViewCreateInfo info{.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-                               .image = image,
-                               .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                               .format = format,
-                               .components = components,
-                               .subresourceRange = range};
+    VkComponentMapping components{
+        .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+        .a = VK_COMPONENT_SWIZZLE_IDENTITY};
+    VkImageSubresourceRange range{
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseMipLevel = 0,
+        .levelCount = 1,
+        .baseArrayLayer = 0,
+        .layerCount = 1};
+    VkImageViewCreateInfo info{
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+        .image = image,
+        .viewType = VK_IMAGE_VIEW_TYPE_2D,
+        .format = format,
+        .components = components,
+        .subresourceRange = range};
     VkImageView image_view;
     vk_assert(vkCreateImageView(device.get(), &info, nullptr, &image_view), "Failed to create image view.");
     return std::unique_ptr<image_view_t>(image_view, std::default_delete<image_view_t>{device});

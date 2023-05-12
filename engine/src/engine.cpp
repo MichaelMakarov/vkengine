@@ -20,6 +20,7 @@ void engine::run()
     _renderer->run();
 }
 
-void engine::add_shader(shader_info const &info)
+void engine::add_shader(std::string const &vsfilename, std::string fsfilename)
 {
+    _renderer->add_shader(vsfilename, fsfilename);
 }

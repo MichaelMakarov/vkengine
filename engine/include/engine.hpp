@@ -2,17 +2,7 @@
 #include <memory>
 #include <string>
 
-enum struct shader_type
-{
-    vertex,
-    fragment
-};
 
-struct shader_info
-{
-    std::string filename;
-    shader_type type;
-};
 
 class engine
 {
@@ -23,7 +13,7 @@ class engine
 public:
     ~engine();
     void run();
-    void add_shader(shader_info const &info);
+    void add_shader(std::string const &vsfilename, std::string fsfilename);
 
     static std::shared_ptr<engine> make_engine(unsigned w, unsigned h, char const *title);
 };
