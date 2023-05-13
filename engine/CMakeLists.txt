@@ -13,7 +13,9 @@ add_library(
     src/delete.cpp
 )
 target_include_directories(
-    engine PUBLIC include
+    engine 
+    PUBLIC include 
+    PRIVATE include/private
 )
 target_link_libraries(
     engine

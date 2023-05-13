@@ -5,7 +5,7 @@ std::unique_ptr<command_pool_t> make_command_pool(std::shared_ptr<device_t> cons
 void allocate_command_buffers(VkDevice device, VkCommandPool cmdpool, std::vector<VkCommandBuffer> &buffers);
 void free_command_buffers(VkDevice device, VkCommandPool cmdpool, std::vector<VkCommandBuffer> const &buffers);
 
-void renderer::copy_resources()
+void graphics_renderer::copy_resources()
 {
     if (!_copy_descriptors.empty())
         return;

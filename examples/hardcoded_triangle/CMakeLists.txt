@@ -6,7 +6,6 @@ target_link_libraries(
     hardcoded_triangle PRIVATE engine
 )
 
-message(STATUS "config $<CONFIG>")
 
 add_custom_command(
     TARGET hardcoded_triangle POST_BUILD

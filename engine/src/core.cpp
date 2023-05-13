@@ -249,7 +249,7 @@ std::shared_ptr<device_t> make_device(VkPhysicalDevice phys, std::set<uint32_t> 
     return std::shared_ptr<device_t>(device, std::default_delete<device_t>{});
 }
 
-void renderer::create_core()
+void graphics_renderer::create_core()
 {
     _instance = make_instance();
 #if defined DEBUG || _DEBUG

@@ -240,7 +240,7 @@ std::unique_ptr<command_pool_t> make_command_pool(std::shared_ptr<device_t> cons
 void allocate_command_buffers(VkDevice device, VkCommandPool cmdpool, std::vector<VkCommandBuffer> &buffers);
 void free_command_buffers(VkDevice device, VkCommandPool cmdpool, std::vector<VkCommandBuffer> const &buffers);
 
-void renderer::create_swapchain()
+void graphics_renderer::create_swapchain()
 {
     clear_framebuffers();
     VkFormat format{VK_FORMAT_B8G8R8A8_UNORM};
@@ -259,11 +259,11 @@ void renderer::create_swapchain()
     allocate_command_buffers(_device.get(), _frame_cmdpool.get(), _frame_cmdbuffers);
 }
 
-void renderer::clear_framebuffers()
+void graphics_renderer::clear_framebuffers()
 {
     if (_render_pass)
     {
-        vk_assert(vkDeviceWaitIdle(_device.get()), "Failed to wait idles to free frame command buffers.");
+        stop_drawing();
         free_command_buffers(_device.get(), _frame_cmdpool.get(), _frame_cmdbuffers);
     }
 }

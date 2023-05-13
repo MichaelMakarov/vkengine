@@ -11,7 +11,6 @@
 template <typename T>
 using ptr_value_type = typename std::pointer_traits<T>::element_type;
 
-struct GLFWwindow;
 template <>
 struct std::default_delete<GLFWwindow>
 {
@@ -145,28 +144,7 @@ struct pipeline_drawer
 {
     virtual ~pipeline_drawer() = default;
     virtual void draw_command(VkCommandBuffer) = 0;
-    virtual void set_pipeline(std::unique_ptr<pipeline_t> &&) = 0;
-};
-
-struct pipeline_builder
-{
-    VkViewport viewport;
-    VkRect2D scissor;
-    VkPipelineRasterizationStateCreateInfo rasterization_state;
-    VkPipelineMultisampleStateCreateInfo multisample_state;
-    VkPipelineColorBlendAttachmentState attachment_state;
-    VkPipelineVertexInputStateCreateInfo vertex_input_state;
-    VkPipelineInputAssemblyStateCreateInfo input_assembly_state;
-    VkPipelineLayout pipeline_layout;
-    VkRenderPass render_pass;
-    std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
-
-    pipeline_builder();
-    pipeline_builder(pipeline_builder const &) = default;
-    pipeline_builder(pipeline_builder &&) noexcept;
-    pipeline_builder &operator=(pipeline_builder const &) = default;
-    pipeline_builder &operator=(pipeline_builder &&) noexcept;
-    std::unique_ptr<pipeline_t> create_pipeline(std::shared_ptr<device_t> const &device) const;
+    virtual void update_rendering(std::shared_ptr<device_t> const &, VkRenderPass, VkExtent2D) = 0;
 };
 
 struct copy_descriptor
@@ -188,7 +166,7 @@ public:
     void copy(copy_descriptor const *descriptors, std::size_t descriptors_count);
 };
 
-class renderer
+class graphics_renderer
 {
     VkPhysicalDevice _physdevice;
     device_properties _props;
@@ -198,7 +176,7 @@ class renderer
     VkQueue _transfer_queue;
     std::size_t _frame_index{};
 
-    std::unique_ptr<GLFWwindow> _wnd;
+    std::shared_ptr<GLFWwindow> _wnd;
     std::shared_ptr<instance_t> _instance;
     std::shared_ptr<debug_messenger_t> _messenger;
     std::shared_ptr<surface_t> _surface;
@@ -215,7 +193,6 @@ class renderer
     std::vector<VkCommandBuffer> _frame_cmdbuffers;
 
     std::vector<std::unique_ptr<pipeline_drawer>> _pipeline_drawers;
-    std::vector<pipeline_builder> _pipeline_builders;
 
     std::unique_ptr<command_pool_t> _copy_cmdpool;
     std::unique_ptr<fence_t> _copy_sync_fence;
@@ -223,19 +200,20 @@ class renderer
     std::vector<copy_descriptor> _copy_descriptors;
 
 public:
-    renderer(int w, int h, char const *title);
-    ~renderer();
+    graphics_renderer(std::shared_ptr<GLFWwindow> const &wnd);
+    ~graphics_renderer();
     void run();
-    void add_shader(std::string const &vsfilename, std::string fsfilename);
+    void on_window_resized(int w, int h);
+    void add_content(std::shared_ptr<content_provider> const &provider);
 
 private:
     void create_core();
     void create_swapchain();
     void create_pipeline();
-    void on_window_resized(int w, int h);
     void draw_frame();
     void update_resources();
     void set_draw_commands();
     void copy_resources();
     void clear_framebuffers();
+    void stop_drawing();
 };

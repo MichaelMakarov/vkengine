@@ -1,74 +1,23 @@
 #include <renderer.hpp>
 #include <GLFW/glfw3.h>
-#include <functional>
-
-using namespace std::placeholders;
 
 constexpr uint64_t timeout = std::numeric_limits<uint64_t>::max();
 
-void std::default_delete<GLFWwindow>::operator()(GLFWwindow *wnd) const
+graphics_renderer::graphics_renderer(std::shared_ptr<GLFWwindow> const &wnd) : _wnd{wnd}
 {
-    glfwDestroyWindow(wnd);
-}
-
-namespace
-{
-    struct glfwinstance
-    {
-        glfwinstance()
-        {
-            if (!glfwInit())
-            {
-                RAISE("Failed to initialize glfw library");
-            }
-            glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        }
-        ~glfwinstance()
-        {
-            glfwTerminate();
-        }
-    };
-    glfwinstance __intstance__;
-
-    std::function<void(int, int)> resize_func;
-
-    void resize_callback(GLFWwindow *, int w, int h)
-    {
-        if (resize_func)
-        {
-            resize_func(w, h);
-        }
-    }
-
-    GLFWwindow *create_window(int w, int h, char const *title)
-    {
-        auto wnd = glfwCreateWindow(w, h, title, nullptr, nullptr);
-        if (!wnd)
-        {
-            RAISE("Failed to create window.");
-        }
-        glfwSetWindowSizeCallback(wnd, &resize_callback);
-        return wnd;
-    }
-}
-
-renderer::renderer(int w, int h, char const *title)
-{
-    _extent.width = static_cast<uint32_t>(w);
-    _extent.height = static_cast<uint32_t>(h);
-    _wnd.reset(create_window(w, h, title));
     create_core();
-    resize_func = std::bind(&renderer::on_window_resized, this, _1, _2);
 }
 
-renderer::~renderer()
+graphics_renderer::~graphics_renderer()
 {
     clear_framebuffers();
 }
 
-void renderer::run()
+void graphics_renderer::run()
 {
-    on_window_resized(static_cast<int>(_extent.width), static_cast<int>(_extent.height));
+    int w, h;
+    glfwGetWindowSize(_wnd.get(), &w, &h);
+    on_window_resized(w, h);
     while (!glfwWindowShouldClose(_wnd.get()))
     {
         glfwPollEvents();
@@ -76,7 +25,7 @@ void renderer::run()
     }
 }
 
-void renderer::draw_frame()
+void graphics_renderer::draw_frame()
 {
     auto sync_fence = _frame_sync_fences[_frame_index].get();
     auto submit_semaphore = _frame_submit_semaphores[_frame_index].get();
@@ -115,12 +64,13 @@ void renderer::draw_frame()
     _frame_index = (_frame_index + 1) % _image_views.size();
 }
 
-void renderer::update_resources()
+void graphics_renderer::update_resources()
 {
 }
 
-void renderer::set_draw_commands()
+void graphics_renderer::set_draw_commands()
 {
+    stop_drawing();
     for (std::size_t i{}; i < _frame_cmdbuffers.size(); ++i)
     {
         auto frame_cmdbuffer = _frame_cmdbuffers[i];
@@ -156,11 +106,16 @@ void renderer::set_draw_commands()
     }
 }
 
-void renderer::on_window_resized(int w, int h)
+void graphics_renderer::on_window_resized(int w, int h)
 {
     _extent.width = static_cast<uint32_t>(w);
     _extent.height = static_cast<uint32_t>(h);
     create_swapchain();
     create_pipeline();
     set_draw_commands();
+}
+
+void graphics_renderer::stop_drawing()
+{
+    vk_assert(vkDeviceWaitIdle(_device.get()), "Failed to wait idles to free frame command buffers.");
 }
