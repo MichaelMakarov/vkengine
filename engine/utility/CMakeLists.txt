@@ -1,0 +1,2 @@
+add_library(engine_utility STATIC logger_provider.cpp file_logger.cpp)
+target_include_directories(engine_utility PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

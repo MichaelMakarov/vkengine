@@ -7,7 +7,5 @@ find_package(Vulkan REQUIRED)
 find_package(GLFW3 REQUIRED)
 find_package(GLM REQUIRED)
 
-subdirs(
-    engine
-    examples
-)
+add_subdirectory(engine)
+add_subdirectory(examples)
