@@ -1,7 +1,7 @@
 #include "graphics_renderer.hpp"
 
-#include "window_context.hpp"
 #include "graphics_error.hpp"
+#include "window_context.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -53,7 +53,7 @@ void graphics_renderer::run() {
     }
 }
 
-void graphics_renderer::set_extent_changed_callback(rendering_changed_callback_t const &callback) {
+void graphics_renderer::set_rendering_changed_callback(rendering_changed_callback_t const &callback) {
     rendering_changed_ = callback;
 }
 
@@ -84,6 +84,10 @@ void graphics_renderer::set_pipeline_provider(std::shared_ptr<pipeline_provider>
 
 void graphics_renderer::on_window_resized(int width, int height) {
     wait_device();
+    if (width == 0 || height == 0) {
+        // there is no need to recreate swapchain and set command buffers
+        return;
+    }
     VkSurfaceCapabilitiesKHR surface_capabilities = get_surface_capabilities();
     swapchain_ctx_.update_extent(surface_capabilities.currentExtent);
     if (rendering_changed_) {
@@ -97,6 +101,11 @@ void graphics_renderer::on_window_resized(int width, int height) {
 
 void graphics_renderer::update_render_pass() {
     wait_device();
+    int width, height;
+    glfwGetFramebufferSize(instance_ctx_.get_window(), &width, &height);
+    if (width == 0 || height == 0) {
+        return;
+    }
     set_command_buffers();
 }
 

@@ -49,7 +49,7 @@ class graphics_renderer {
         return device_ctx_;
     }
 
-    void set_extent_changed_callback(rendering_changed_callback_t const &callback);
+    void set_rendering_changed_callback(rendering_changed_callback_t const &callback);
 
     void set_cursor_callback(cursor_callback_t const &callback);
 

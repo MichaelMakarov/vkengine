@@ -1,10 +1,38 @@
 #include "graphics_manager.hpp"
 #include "graphics_error.hpp"
 
+#include <cstddef>
 #include <fstream>
 #include <vector>
 
 namespace {
+
+    void *allocate_memory(void *data_ptr, size_t size, size_t alignment, VkSystemAllocationScope scope) {
+        return nullptr;
+    }
+
+    void *reallocate_memory(void *pUserData, void *pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope) {
+        return nullptr;
+    }
+
+    void free_memory(void *pUserData, void *pMemory) {
+    }
+
+    void
+    internal_allocation(void *pUserData, size_t size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope) {
+    }
+
+    void internal_free(void *pUserData, size_t size, VkInternalAllocationType allocationType, VkSystemAllocationScope allocationScope) {
+    }
+
+    /// TODO: think about approach and necessity to use this
+    VkAllocationCallbacks allocation_callbacks{
+        .pfnAllocation = &allocate_memory,
+        .pfnReallocation = &reallocate_memory,
+        .pfnFree = &free_memory,
+        .pfnInternalAllocation = &internal_allocation,
+        .pfnInternalFree = &internal_free,
+    };
 
     VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT msg_severity,
                                                   VkDebugUtilsMessageTypeFlagsEXT /*msg_type*/,
@@ -30,8 +58,9 @@ namespace {
 
 } // namespace
 
-shared_ptr_of<VkInstance>
-graphics_manager::make_instance(char const *app_name, std::vector<char const *> const &extensions, std::vector<char const *> const &layers) {
+shared_ptr_of<VkInstance> graphics_manager::make_instance(char const *app_name,
+                                                          std::vector<char const *> const &extensions,
+                                                          std::vector<char const *> const &layers) {
     VkApplicationInfo app_info{
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName = app_name,
@@ -97,8 +126,8 @@ unique_ptr_of<VkSurfaceKHR> graphics_manager::make_surface(shared_ptr_of<VkInsta
 }
 
 shared_ptr_of<VkDevice> graphics_manager::make_device(VkPhysicalDevice phys_device,
-                                                    std::vector<VkDeviceQueueCreateInfo> const &queue_infos,
-                                                    std::vector<char const *> const &extension_names) {
+                                                      std::vector<VkDeviceQueueCreateInfo> const &queue_infos,
+                                                      std::vector<char const *> const &extension_names) {
     VkPhysicalDeviceFeatures features{};
     VkDeviceCreateInfo info{
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -163,7 +192,7 @@ unique_ptr_of<VkRenderPass> graphics_manager::make_render_pass(shared_ptr_of<VkD
 }
 
 unique_ptr_of<VkSwapchainKHR> graphics_manager::make_swapchain(shared_ptr_of<VkDevice> device,
-                                                             VkSwapchainCreateInfoKHR const &swapchain_info) {
+                                                               VkSwapchainCreateInfoKHR const &swapchain_info) {
     VkSwapchainKHR swapchain;
     vk_assert(vkCreateSwapchainKHR(device.get(), &swapchain_info, nullptr, &swapchain), "Failed to create a swapchain.");
     return unique_ptr_of<VkSwapchainKHR>(swapchain, [device](VkSwapchainKHR swapchain) {
@@ -205,7 +234,7 @@ graphics_manager::make_buffer(shared_ptr_of<VkDevice> device, size_t size, VkBuf
 }
 
 unique_ptr_of<VkCommandBuffer> graphics_manager::make_command_buffer(shared_ptr_of<VkDevice> device,
-                                                                   shared_ptr_of<VkCommandPool> command_pool) {
+                                                                     shared_ptr_of<VkCommandPool> command_pool) {
     VkCommandBufferAllocateInfo allocate_info{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandPool = command_pool.get(),
@@ -221,10 +250,10 @@ unique_ptr_of<VkCommandBuffer> graphics_manager::make_command_buffer(shared_ptr_
 }
 
 unique_ptr_of<VkFramebuffer> graphics_manager::make_framebuffer(shared_ptr_of<VkDevice> device,
-                                                              VkImageView image_view,
-                                                              VkRenderPass render_pass,
-                                                              VkFormat format,
-                                                              VkExtent2D extent) {
+                                                                VkImageView image_view,
+                                                                VkRenderPass render_pass,
+                                                                VkFormat format,
+                                                                VkExtent2D extent) {
     VkFramebufferCreateInfo framebuffer_info{
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .renderPass = render_pass,
@@ -272,7 +301,8 @@ unique_ptr_of<VkImageView> graphics_manager::make_image_view(shared_ptr_of<VkDev
     });
 }
 
-unique_ptr_of<VkDeviceMemory> graphics_manager::make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index) {
+unique_ptr_of<VkDeviceMemory>
+graphics_manager::make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index) {
     VkMemoryAllocateInfo info{
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = size,
@@ -312,8 +342,8 @@ unique_ptr_of<VkSemaphore> graphics_manager::make_semaphore(shared_ptr_of<VkDevi
 }
 
 unique_ptr_of<VkPipelineLayout> graphics_manager::make_pipeline_layout(shared_ptr_of<VkDevice> device,
-                                                                     std::vector<VkDescriptorSetLayout> const &set_layouts,
-                                                                     std::vector<VkPushConstantRange> const &push_constant_ranges) {
+                                                                       std::vector<VkDescriptorSetLayout> const &set_layouts,
+                                                                       std::vector<VkPushConstantRange> const &push_constant_ranges) {
     VkPipelineLayoutCreateInfo layout_info{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = static_cast<uint32_t>(set_layouts.size()),
@@ -353,7 +383,8 @@ VkPipelineShaderStageCreateInfo graphics_manager::make_shader_stage(VkShaderModu
     };
 }
 
-unique_ptr_of<VkPipeline> graphics_manager::make_pipeline(shared_ptr_of<VkDevice> device, VkGraphicsPipelineCreateInfo const &pipeline_info) {
+unique_ptr_of<VkPipeline> graphics_manager::make_pipeline(shared_ptr_of<VkDevice> device,
+                                                          VkGraphicsPipelineCreateInfo const &pipeline_info) {
     VkPipeline pipeline;
     vk_assert(vkCreateGraphicsPipelines(device.get(), nullptr, 1, &pipeline_info, nullptr, &pipeline), "Failed to create a pipeline.");
     return unique_ptr_of<VkPipeline>(pipeline, [device](VkPipeline pipeline) {
@@ -361,3 +392,5 @@ unique_ptr_of<VkPipeline> graphics_manager::make_pipeline(shared_ptr_of<VkDevice
         vkDestroyPipeline(device.get(), pipeline, nullptr);
     });
 }
+
+

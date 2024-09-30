@@ -5,7 +5,9 @@ add_library(
     image_context.cpp 
     image_renderer.cpp 
     instance_context.cpp 
+    memory_buffer.cpp
     physical_device.cpp 
+    pipeline_builder.cpp
     swapchain_context.cpp 
     swapchain_presenter.cpp 
     graphics_manager.cpp 
