@@ -7,19 +7,19 @@
 
 namespace {
 
-    std::unique_ptr<logger_interface> global_logger = std::make_unique<console_logger>();
+    std::unique_ptr<LoggerInterface> global_logger = std::make_unique<ConsoleLogger>();
 
 }
 
-void logger_provider::println(std::string_view str) {
+void LoggerProvider::println(std::string_view str) {
     global_logger->print(str);
     global_logger->print("\n");
 }
 
-void logger_provider::make_console_logger() {
-    global_logger = std::make_unique<console_logger>();
+void LoggerProvider::make_console_logger() {
+    global_logger = std::make_unique<ConsoleLogger>();
 }
 
-void logger_provider::make_file_logger(std::string_view filename) {
-    global_logger = std::make_unique<file_logger>(filename);
+void LoggerProvider::make_file_logger(std::string_view filename) {
+    global_logger = std::make_unique<FileLogger>(filename);
 }

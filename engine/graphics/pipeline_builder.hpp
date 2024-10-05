@@ -4,7 +4,7 @@
 
 #include <optional>
 
-class pipeline_builder {
+class PipelineBuilder {
     VkPipelineVertexInputStateCreateInfo vertex_input_state_{default_vertex_input_state()};
     VkPipelineInputAssemblyStateCreateInfo input_assembly_state_{default_input_assembly_state()};
     std::optional<VkPipelineTessellationStateCreateInfo> tesselation_state_;

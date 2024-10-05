@@ -15,9 +15,9 @@ namespace {
 
 } // namespace
 
-swapchain_context::swapchain_context(shared_ptr_of<VkDevice> device, context_info const &info)
+SwapchainContext::SwapchainContext(shared_ptr_of<VkDevice> device, config const &info)
     : device_{device}
-    , command_pool_{graphics_manager::make_command_pool(device, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, info.graphics_qfm)}
+    , command_pool_{GraphicsManager::make_command_pool(device, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, info.graphics_qfm)}
     , qfm_indices_{make_queue_family_indices(info)}
     , swapchain_info_{
           .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
@@ -41,35 +41,35 @@ swapchain_context::swapchain_context(shared_ptr_of<VkDevice> device, context_inf
       } {
 }
 
-swapchain_context::~swapchain_context() = default;
+SwapchainContext::~SwapchainContext() = default;
 
-image_context const &swapchain_context::get_image() {
-    image_context const &image_ctx = image_contexts_[image_index_];
+ImageContext const &SwapchainContext::get_image() {
+    ImageContext const &image_ctx = image_contexts_[image_index_];
     image_index_ = (image_index_ + 1) % image_contexts_.size();
     return image_ctx;
 }
 
-void swapchain_context::update_extent(VkExtent2D extent) {
+void SwapchainContext::update_extent(VkExtent2D extent) {
     swapchain_info_.imageExtent = extent;
     swapchain_info_.oldSwapchain = swapchain_.get();
-    swapchain_ = graphics_manager::make_swapchain(device_, swapchain_info_);
-    render_pass_ = graphics_manager::make_render_pass(device_, swapchain_info_.imageFormat);
+    swapchain_ = GraphicsManager::make_swapchain(device_, swapchain_info_);
+    render_pass_ = GraphicsManager::make_render_pass(device_, swapchain_info_.imageFormat);
 
     auto images = get_swapchain_images(device_.get(), swapchain_.get());
     image_contexts_.resize(images.size());
-    image_context::context_info info;
+    ImageContext::context_info info;
     info.extent = extent;
     info.format = swapchain_info_.imageFormat;
     info.render_pass = render_pass_.get();
     for (std::size_t i{}; i < images.size(); ++i) {
         info.image = images[i];
-        image_contexts_[i] = image_context(device_, info, command_pool_);
+        image_contexts_[i] = ImageContext(device_, info, command_pool_);
     }
     image_index_ = 0;
 }
 
-std::vector<image_renderer> swapchain_context::get_image_renderers() const {
-    std::vector<image_renderer> image_renderers;
+std::vector<ImageRenderer> SwapchainContext::get_image_renderers() const {
+    std::vector<ImageRenderer> image_renderers;
     image_renderers.reserve(image_contexts_.size());
     for (auto const &image : image_contexts_) {
         image_renderers.emplace_back(&image, render_pass_.get(), swapchain_info_.imageExtent);
@@ -77,7 +77,7 @@ std::vector<image_renderer> swapchain_context::get_image_renderers() const {
     return image_renderers;
 }
 
-std::vector<uint32_t> swapchain_context::make_queue_family_indices(context_info const &info) {
+std::vector<uint32_t> SwapchainContext::make_queue_family_indices(config const &info) {
     std::vector<uint32_t> qfm_indices;
     qfm_indices.reserve(2);
     qfm_indices.push_back(info.graphics_qfm);

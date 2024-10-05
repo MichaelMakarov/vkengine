@@ -2,29 +2,47 @@
 
 #include "graphics_types.hpp"
 
-class memory_buffer {
-    struct buffer_properties {
-        VkDeviceSize offset;
-        VkMemoryRequirements requirements;
+#include <set>
+
+class MemoryBuffer {
+  public:
+    struct Config {
+        VkDeviceSize size;
+        VkBufferUsageFlags usage;
+        VkSharingMode mode = VK_SHARING_MODE_EXCLUSIVE;
     };
 
+  private:
     shared_ptr_of<VkDevice> device_;
-    unique_ptr_of<VkDeviceMemory> memory_;
+    shared_ptr_of<VkDeviceMemory> memory_;
     unique_ptr_of<VkBuffer> buffer_;
     VkMemoryRequirements requirements_;
+    VkDeviceSize offset_;
+
+    MemoryBuffer(shared_ptr_of<VkDevice> device, Config info);
+
+    void bind(shared_ptr_of<VkDeviceMemory> memory);
 
   public:
-    struct config {
-        size_t size;
-        VkBufferUsageFlags usage;
-        VkSharingMode mode;
-        VkMemoryPropertyFlags properties;
-    };
+    MemoryBuffer() = default;
 
-    memory_buffer(shared_ptr_of<VkDevice> device, VkPhysicalDevice phys_device, config const &info);
+    MemoryBuffer(shared_ptr_of<VkDevice> device, VkPhysicalDevice phys_device, Config info, VkMemoryPropertyFlags properties);
+
+    MemoryBuffer(MemoryBuffer &&) noexcept = default;
+
+    MemoryBuffer &operator=(MemoryBuffer &&) noexcept = default;
+
+    static std::vector<MemoryBuffer> make_buffers(shared_ptr_of<VkDevice> device,
+                                                  VkPhysicalDevice phys_device,
+                                                  std::initializer_list<Config> configs,
+                                                  VkMemoryPropertyFlags properties);
 
     VkBuffer get_buffer() const {
         return buffer_.get();
+    }
+
+    VkDeviceSize get_size() const {
+        return requirements_.size;
     }
 
     void fill(void const *data, size_t size);

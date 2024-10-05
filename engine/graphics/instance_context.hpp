@@ -6,14 +6,14 @@
 
 #include <GLFW/glfw3.h>
 
-class instance_context {
+class InstanceContext {
     shared_ptr_of<VkInstance> instance_;
     unique_ptr_of<VkDebugUtilsMessengerEXT> debug_messenger_;
     unique_ptr_of<GLFWwindow *> window_;
     unique_ptr_of<VkSurfaceKHR> surface_;
 
   public:
-    explicit instance_context(window_info const &info);
+    explicit InstanceContext(WindowConfig const &info);
 
     VkInstance get_instance() const {
         return instance_.get();

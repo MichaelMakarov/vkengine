@@ -14,9 +14,9 @@ struct rendering_info {
 
 using rendering_changed_callback_t = std::function<void(rendering_info const &)>;
 
-class graphics_renderer {
+class GraphicsRenderer {
   public:
-    struct settings {
+    struct Settings {
         VkSurfaceFormatKHR surface_format{
             .format = VK_FORMAT_B8G8R8A8_UNORM,
             .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
@@ -28,24 +28,24 @@ class graphics_renderer {
     };
 
   private:
-    settings settings_;
-    instance_context instance_ctx_;
-    device_context device_ctx_;
-    swapchain_context swapchain_ctx_;
-    swapchain_presenter swapchain_presenter_;
+    Settings settings_;
+    InstanceContext instance_ctx_;
+    DeviceContext device_ctx_;
+    SwapchainContext swapchain_ctx_;
+    SwapchainPresenter swapchain_presenter_;
     rendering_changed_callback_t rendering_changed_;
-    std::shared_ptr<pipeline_provider> pipeline_provider_;
+    std::shared_ptr<PipelineProvider> pipeline_provider_;
 
   public:
-    explicit graphics_renderer(window_info const &info);
+    explicit GraphicsRenderer(WindowConfig const &info);
 
-    graphics_renderer(window_info const &info, settings const &settings);
+    GraphicsRenderer(WindowConfig const &info, Settings const &settings);
 
-    ~graphics_renderer();
+    ~GraphicsRenderer();
 
     void run();
 
-    device_context const &get_device_context() const {
+    DeviceContext const &get_device_context() const {
         return device_ctx_;
     }
 
@@ -59,7 +59,7 @@ class graphics_renderer {
 
     void set_mouse_scroll_callback(mouse_scroll_callback_t const &callback);
 
-    void set_pipeline_provider(std::shared_ptr<pipeline_provider> provider);
+    void set_pipeline_provider(std::shared_ptr<PipelineProvider> provider);
 
   private:
     void on_window_resized(int width, int height);
@@ -72,7 +72,7 @@ class graphics_renderer {
 
     void wait_device() const;
 
-    swapchain_context::context_info get_swapchain_context_info() const;
+    SwapchainContext::config get_swapchain_context_info() const;
 
     VkPresentModeKHR get_supported_present_mode() const;
 

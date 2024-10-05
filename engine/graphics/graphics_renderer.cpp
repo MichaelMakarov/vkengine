@@ -24,25 +24,25 @@ namespace {
 
 } // namespace
 
-graphics_renderer::graphics_renderer(window_info const &info)
-    : graphics_renderer(info, settings{}) {
+GraphicsRenderer::GraphicsRenderer(WindowConfig const &info)
+    : GraphicsRenderer(info, Settings{}) {
 }
 
-graphics_renderer::graphics_renderer(window_info const &info, settings const &settings)
+GraphicsRenderer::GraphicsRenderer(WindowConfig const &info, Settings const &settings)
     : settings_{settings}
     , instance_ctx_{info}
     , device_ctx_{instance_ctx_.get_instance(), instance_ctx_.get_surface()}
     , swapchain_ctx_{device_ctx_.get_device(), get_swapchain_context_info()}
-    , swapchain_presenter_{device_ctx_.get_device(), device_ctx_.get_graphics_queue(), device_ctx_.get_present_queue()} {
-    auto window_ctx = window_context::get_window_context(instance_ctx_.get_window());
-    window_ctx->set_resize_callback(std::bind(&graphics_renderer::on_window_resized, this, std::placeholders::_1, std::placeholders::_2));
+    , swapchain_presenter_{device_ctx_.get_device(), device_ctx_.get_graphics_qfm(), device_ctx_.get_present_qfm()} {
+    auto window_ctx = WindowContext::get_window_context(instance_ctx_.get_window());
+    window_ctx->set_resize_callback(std::bind(&GraphicsRenderer::on_window_resized, this, std::placeholders::_1, std::placeholders::_2));
 }
 
-graphics_renderer::~graphics_renderer() {
+GraphicsRenderer::~GraphicsRenderer() {
     wait_device();
 }
 
-void graphics_renderer::run() {
+void GraphicsRenderer::run() {
     int width, height;
     glfwGetWindowSize(instance_ctx_.get_window(), &width, &height);
     on_window_resized(width, height);
@@ -53,36 +53,36 @@ void graphics_renderer::run() {
     }
 }
 
-void graphics_renderer::set_rendering_changed_callback(rendering_changed_callback_t const &callback) {
+void GraphicsRenderer::set_rendering_changed_callback(rendering_changed_callback_t const &callback) {
     rendering_changed_ = callback;
 }
 
-void graphics_renderer::set_cursor_callback(cursor_callback_t const &callback) {
-    auto window_ctx = window_context::get_window_context(instance_ctx_.get_window());
+void GraphicsRenderer::set_cursor_callback(cursor_callback_t const &callback) {
+    auto window_ctx = WindowContext::get_window_context(instance_ctx_.get_window());
     window_ctx->set_cursor_callback(callback);
 }
 
-void graphics_renderer::set_keyboard_callback(keyboard_callback_t const &callback) {
-    auto window_ctx = window_context::get_window_context(instance_ctx_.get_window());
+void GraphicsRenderer::set_keyboard_callback(keyboard_callback_t const &callback) {
+    auto window_ctx = WindowContext::get_window_context(instance_ctx_.get_window());
     window_ctx->set_keyboard_callback(callback);
 }
 
-void graphics_renderer::set_mouse_button_callback(mouse_button_callback_t const &callback) {
-    auto window_ctx = window_context::get_window_context(instance_ctx_.get_window());
+void GraphicsRenderer::set_mouse_button_callback(mouse_button_callback_t const &callback) {
+    auto window_ctx = WindowContext::get_window_context(instance_ctx_.get_window());
     window_ctx->set_mouse_button_callback(callback);
 }
 
-void graphics_renderer::set_mouse_scroll_callback(mouse_scroll_callback_t const &callback) {
-    auto window_ctx = window_context::get_window_context(instance_ctx_.get_window());
+void GraphicsRenderer::set_mouse_scroll_callback(mouse_scroll_callback_t const &callback) {
+    auto window_ctx = WindowContext::get_window_context(instance_ctx_.get_window());
     window_ctx->set_mouse_scroll_callback(callback);
 }
 
-void graphics_renderer::set_pipeline_provider(std::shared_ptr<pipeline_provider> provider) {
+void GraphicsRenderer::set_pipeline_provider(std::shared_ptr<PipelineProvider> provider) {
     pipeline_provider_.swap(provider);
-    pipeline_provider_->set_update_rendering(std::bind(&graphics_renderer::update_render_pass, this));
+    pipeline_provider_->set_update_rendering(std::bind(&GraphicsRenderer::update_render_pass, this));
 }
 
-void graphics_renderer::on_window_resized(int width, int height) {
+void GraphicsRenderer::on_window_resized(int width, int height) {
     wait_device();
     if (width == 0 || height == 0) {
         // there is no need to recreate swapchain and set command buffers
@@ -99,7 +99,7 @@ void graphics_renderer::on_window_resized(int width, int height) {
     set_command_buffers();
 }
 
-void graphics_renderer::update_render_pass() {
+void GraphicsRenderer::update_render_pass() {
     wait_device();
     int width, height;
     glfwGetFramebufferSize(instance_ctx_.get_window(), &width, &height);
@@ -109,7 +109,7 @@ void graphics_renderer::update_render_pass() {
     set_command_buffers();
 }
 
-void graphics_renderer::set_command_buffers() {
+void GraphicsRenderer::set_command_buffers() {
     if (pipeline_provider_) {
         for (auto &renderer : swapchain_ctx_.get_image_renderers()) {
             pipeline_provider_->update_command_buffer(renderer.begin_render_pass());
@@ -123,19 +123,19 @@ void graphics_renderer::set_command_buffers() {
     }
 }
 
-VkSurfaceCapabilitiesKHR graphics_renderer::get_surface_capabilities() const {
+VkSurfaceCapabilitiesKHR GraphicsRenderer::get_surface_capabilities() const {
     VkSurfaceCapabilitiesKHR capabilities;
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device_ctx_.get_physical_device(), instance_ctx_.get_surface(), &capabilities);
     return capabilities;
 }
 
-void graphics_renderer::wait_device() const {
+void GraphicsRenderer::wait_device() const {
     vk_assert(vkDeviceWaitIdle(device_ctx_.get_device().get()), "Failed to wait idles.");
 }
 
-swapchain_context::context_info graphics_renderer::get_swapchain_context_info() const {
+SwapchainContext::config GraphicsRenderer::get_swapchain_context_info() const {
     VkSurfaceCapabilitiesKHR surface_capabilities = get_surface_capabilities();
-    swapchain_context::context_info info;
+    SwapchainContext::config info;
     info.surface = instance_ctx_.get_surface();
     info.surface_format = get_supported_surface_format();
     info.present_mode = get_supported_present_mode();
@@ -148,7 +148,7 @@ swapchain_context::context_info graphics_renderer::get_swapchain_context_info() 
     return info;
 }
 
-VkPresentModeKHR graphics_renderer::get_supported_present_mode() const {
+VkPresentModeKHR GraphicsRenderer::get_supported_present_mode() const {
     uint32_t modes_count;
     vkGetPhysicalDeviceSurfacePresentModesKHR(device_ctx_.get_physical_device(), instance_ctx_.get_surface(), &modes_count, nullptr);
     std::vector<VkPresentModeKHR> present_modes(modes_count);
@@ -168,7 +168,7 @@ VkPresentModeKHR graphics_renderer::get_supported_present_mode() const {
     return present_modes.front();
 }
 
-VkSurfaceFormatKHR graphics_renderer::get_supported_surface_format() const {
+VkSurfaceFormatKHR GraphicsRenderer::get_supported_surface_format() const {
     uint32_t formats_count;
     vkGetPhysicalDeviceSurfaceFormatsKHR(device_ctx_.get_physical_device(), instance_ctx_.get_surface(), &formats_count, nullptr);
     std::vector<VkSurfaceFormatKHR> surface_formats(formats_count);

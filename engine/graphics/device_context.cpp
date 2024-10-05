@@ -10,13 +10,13 @@
 
 namespace {
 
-    bool is_surface_supported(VkPhysicalDevice phys_device, VkSurfaceKHR surface, queue_family const &qfm) {
+    bool is_surface_supported(VkPhysicalDevice phys_device, VkSurfaceKHR surface, QueueFamily const &qfm) {
         VkBool32 surface_supported;
         vkGetPhysicalDeviceSurfaceSupportKHR(phys_device, qfm.index, surface, &surface_supported);
         return surface_supported != VK_FALSE;
     }
 
-    size_t physical_device_rate(VkSurfaceKHR surface, physical_device const &device) {
+    size_t physical_device_rate(VkSurfaceKHR surface, PhysicalDevice const &device) {
         size_t total_score{1};
         if (device.properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU) {
             total_score += 100;
@@ -26,7 +26,7 @@ namespace {
         }
 
         size_t supported_graphics_qfms = 0;
-        for (queue_family const &qfm : device.graphics_qfms) {
+        for (QueueFamily const &qfm : device.graphics_qfms) {
             if (is_surface_supported(device.device, surface, qfm)) {
                 supported_graphics_qfms++;
             }
@@ -38,12 +38,12 @@ namespace {
         return total_score;
     }
 
-    physical_device get_best_physical_device(VkInstance instance, VkSurfaceKHR surface) {
-        auto phys_devices = physical_device::get_physical_devices(instance, surface);
+    PhysicalDevice get_best_physical_device(VkInstance instance, VkSurfaceKHR surface) {
+        auto phys_devices = PhysicalDevice::get_physical_devices(instance, surface);
         if (phys_devices.empty()) {
             raise_error("There are no available physical devices.");
         }
-        std::sort(phys_devices.begin(), phys_devices.end(), [surface](physical_device const &left, physical_device const &right) {
+        std::sort(phys_devices.begin(), phys_devices.end(), [surface](PhysicalDevice const &left, PhysicalDevice const &right) {
             return physical_device_rate(surface, left) > physical_device_rate(surface, right);
         });
         if (phys_devices.size() > 1) {
@@ -79,14 +79,14 @@ namespace {
 
         template <typename iterator>
         iterator find_free(iterator begin, iterator end) {
-            return std::find_if(begin, end, [this](queue_family const &qfm) { return !qfm_indices_.contains(qfm.index); });
+            return std::find_if(begin, end, [this](QueueFamily const &qfm) { return !qfm_indices_.contains(qfm.index); });
         }
     };
 
 } // namespace
 
-device_context::device_context(VkInstance instance, VkSurfaceKHR surface) {
-    physical_device device = get_best_physical_device(instance, surface);
+DeviceContext::DeviceContext(VkInstance instance, VkSurfaceKHR surface) {
+    PhysicalDevice device = get_best_physical_device(instance, surface);
     phys_device_ = device.device;
     qfm_find_helper find_helper;
 
@@ -183,10 +183,6 @@ device_context::device_context(VkInstance instance, VkSurfaceKHR surface) {
         });
     }
     std::vector<char const *> extension_names{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-    device_ = graphics_manager::make_device(phys_device_, queue_infos, extension_names);
-
-    graphics_queue_ = get_device_queue(device_.get(), graphics_qfm_.index, 0);
-    present_queue_ = get_device_queue(device_.get(), present_qfm_.index, 0);
-    compute_queue_ = get_device_queue(device_.get(), compute_qfm_.index, 0);
-    transfer_queue_ = get_device_queue(device_.get(), transfer_qfm_.index, 0);
+    device_ = GraphicsManager::make_device(phys_device_, queue_infos, extension_names);
 }
+ 

@@ -2,7 +2,7 @@
 
 #include <functional>
 
-struct window_info {
+struct WindowConfig {
     char const *title;
     int width;
     int height;

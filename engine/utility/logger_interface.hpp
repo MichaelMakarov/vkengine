@@ -2,9 +2,9 @@
 
 #include <string_view>
 
-class logger_interface {
+class LoggerInterface {
   public:
-    virtual ~logger_interface() = default;
+    virtual ~LoggerInterface() = default;
 
     virtual void print(std::string_view str) = 0;
 };

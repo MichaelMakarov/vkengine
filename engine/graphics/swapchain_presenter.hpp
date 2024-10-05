@@ -4,7 +4,7 @@
 
 #include "swapchain_context.hpp"
 
-class swapchain_presenter {
+class SwapchainPresenter {
     shared_ptr_of<VkDevice> device_;
     unique_ptr_of<VkFence> sync_fence_;
     VkQueue graphics_queue_;
@@ -12,7 +12,7 @@ class swapchain_presenter {
 
 
   public:
-    swapchain_presenter(shared_ptr_of<VkDevice> device, VkQueue graphics_queue, VkQueue present_queue);
+    SwapchainPresenter(shared_ptr_of<VkDevice> device, uint32_t graphics_qfm, uint32_t present_qfm);
 
-    void submit_and_present(swapchain_context &swapchain_ctx);
+    void submit_and_present(SwapchainContext &swapchain_ctx);
 };

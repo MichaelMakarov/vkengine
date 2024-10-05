@@ -4,7 +4,7 @@
 
 int main() {
     try {
-        graphics_renderer{window_info{
+        GraphicsRenderer{WindowConfig{
                         .title = "Colored window application",
                         .width = 600,
                         .height = 500,

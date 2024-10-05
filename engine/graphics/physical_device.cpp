@@ -5,12 +5,12 @@
 
 namespace {
 
-    std::vector<queue_family> select_qfm_indices(std::vector<VkQueueFamilyProperties> const &qfm_properties, VkQueueFlags queue_flags) {
-        std::vector<queue_family> qfm_indices;
+    std::vector<QueueFamily> select_qfm_indices(std::vector<VkQueueFamilyProperties> const &qfm_properties, VkQueueFlags queue_flags) {
+        std::vector<QueueFamily> qfm_indices;
         qfm_indices.reserve(qfm_properties.size());
         for (uint32_t i = 0; i < qfm_properties.size(); ++i) {
             if (qfm_properties[i].queueFlags & queue_flags) {
-                qfm_indices.push_back(queue_family{.properties = qfm_properties[i], .index = i});
+                qfm_indices.push_back(QueueFamily{.properties = qfm_properties[i], .index = i});
             }
         }
         return qfm_indices;
@@ -24,8 +24,8 @@ namespace {
         return qfm_properties;
     }
 
-    physical_device make_physical_device(VkPhysicalDevice device, VkSurfaceKHR surface) {
-        physical_device phys_device;
+    PhysicalDevice make_physical_device(VkPhysicalDevice device, VkSurfaceKHR surface) {
+        PhysicalDevice phys_device;
         phys_device.device = device;
         vkGetPhysicalDeviceProperties(device, &phys_device.properties);
         vkGetPhysicalDeviceFeatures(device, &phys_device.features);
@@ -41,7 +41,7 @@ namespace {
 
 } // namespace
 
-std::vector<physical_device> physical_device::get_physical_devices(VkInstance instance, VkSurfaceKHR surface) {
+std::vector<PhysicalDevice> PhysicalDevice::get_physical_devices(VkInstance instance, VkSurfaceKHR surface) {
     std::uint32_t devices_count;
     vkEnumeratePhysicalDevices(instance, &devices_count, nullptr);
     if (devices_count == 0) {
@@ -50,11 +50,11 @@ std::vector<physical_device> physical_device::get_physical_devices(VkInstance in
     std::vector<VkPhysicalDevice> devices(devices_count);
     vkEnumeratePhysicalDevices(instance, &devices_count, devices.data());
 
-    std::vector<physical_device> phys_devices(devices.size());
+    std::vector<PhysicalDevice> phys_devices(devices.size());
     std::transform(devices.begin(), devices.end(), phys_devices.begin(), std::bind(&make_physical_device, std::placeholders::_1, surface));
     return phys_devices;
 }
 
-std::string physical_device::get_name() const {
+std::string PhysicalDevice::get_name() const {
     return std::format("GPU[{}] {} {}", properties.deviceID, properties.deviceName, static_cast<uint32_t>(properties.deviceType));
 }

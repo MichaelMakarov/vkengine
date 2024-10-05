@@ -2,7 +2,7 @@
 
 #include "graphics_types.hpp"
 
-class image_context {
+class ImageContext {
   public:
     struct context_info {
         VkImage image;
@@ -19,9 +19,9 @@ class image_context {
     unique_ptr_of<VkCommandBuffer> command_buffer_;
 
   public:
-    image_context() = default;
+    ImageContext() = default;
 
-    image_context(shared_ptr_of<VkDevice> device, context_info const &info, shared_ptr_of<VkCommandPool> cmd_pool);
+    ImageContext(shared_ptr_of<VkDevice> device, context_info const &info, shared_ptr_of<VkCommandPool> cmd_pool);
 
     VkImageView get_image_view() const {
         return image_view_.get();

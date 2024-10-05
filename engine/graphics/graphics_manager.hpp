@@ -7,7 +7,7 @@
 #include <vector>
 #include <string_view>
 
-class graphics_manager {
+class GraphicsManager {
   public:
     static shared_ptr_of<VkInstance>
     make_instance(char const *app_name, std::vector<char const *> const &extensions, std::vector<char const *> const &layers);

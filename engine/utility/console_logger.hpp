@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-class console_logger : public logger_interface {
+class ConsoleLogger : public LoggerInterface {
   public:
     void print(std::string_view str) override {
         std::clog << str;

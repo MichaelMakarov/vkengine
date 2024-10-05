@@ -5,9 +5,9 @@
 
 #include <vector>
 
-class swapchain_context {
+class SwapchainContext {
   public:
-    struct context_info {
+    struct config {
         VkSurfaceKHR surface;
         VkSurfaceFormatKHR surface_format;
         VkPresentModeKHR present_mode;
@@ -26,15 +26,15 @@ class swapchain_context {
     VkSwapchainCreateInfoKHR swapchain_info_;
     unique_ptr_of<VkSwapchainKHR> swapchain_;
     unique_ptr_of<VkRenderPass> render_pass_;
-    std::vector<image_context> image_contexts_;
+    std::vector<ImageContext> image_contexts_;
     size_t image_index_ = 0;
 
   public:
-    swapchain_context(shared_ptr_of<VkDevice> device, context_info const &info);
+    SwapchainContext(shared_ptr_of<VkDevice> device, config const &info);
 
-    ~swapchain_context();
+    ~SwapchainContext();
 
-    image_context const &get_image();
+    ImageContext const &get_image();
 
     VkSwapchainKHR get_swapchain() const {
         return swapchain_.get();
@@ -46,8 +46,8 @@ class swapchain_context {
 
     void update_extent(VkExtent2D extent);
 
-    std::vector<image_renderer> get_image_renderers() const;
+    std::vector<ImageRenderer> get_image_renderers() const;
 
   private:
-    static std::vector<uint32_t> make_queue_family_indices(context_info const &info);
+    static std::vector<uint32_t> make_queue_family_indices(config const &info);
 };

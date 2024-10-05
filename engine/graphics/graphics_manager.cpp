@@ -58,7 +58,7 @@ namespace {
 
 } // namespace
 
-shared_ptr_of<VkInstance> graphics_manager::make_instance(char const *app_name,
+shared_ptr_of<VkInstance> GraphicsManager::make_instance(char const *app_name,
                                                           std::vector<char const *> const &extensions,
                                                           std::vector<char const *> const &layers) {
     VkApplicationInfo app_info{
@@ -85,7 +85,7 @@ shared_ptr_of<VkInstance> graphics_manager::make_instance(char const *app_name,
     });
 }
 
-unique_ptr_of<VkDebugUtilsMessengerEXT> graphics_manager::make_debug_messenger(shared_ptr_of<VkInstance> instance) {
+unique_ptr_of<VkDebugUtilsMessengerEXT> GraphicsManager::make_debug_messenger(shared_ptr_of<VkInstance> instance) {
     VkDebugUtilsMessageSeverityFlagsEXT severity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
                                                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                                                    VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
@@ -116,7 +116,7 @@ unique_ptr_of<VkDebugUtilsMessengerEXT> graphics_manager::make_debug_messenger(s
     });
 }
 
-unique_ptr_of<VkSurfaceKHR> graphics_manager::make_surface(shared_ptr_of<VkInstance> instance, GLFWwindow *window) {
+unique_ptr_of<VkSurfaceKHR> GraphicsManager::make_surface(shared_ptr_of<VkInstance> instance, GLFWwindow *window) {
     VkSurfaceKHR surface;
     vk_assert(glfwCreateWindowSurface(instance.get(), window, nullptr, &surface), "Failed to create window surface.");
     return unique_ptr_of<VkSurfaceKHR>(surface, [instance](VkSurfaceKHR surface) {
@@ -125,7 +125,7 @@ unique_ptr_of<VkSurfaceKHR> graphics_manager::make_surface(shared_ptr_of<VkInsta
     });
 }
 
-shared_ptr_of<VkDevice> graphics_manager::make_device(VkPhysicalDevice phys_device,
+shared_ptr_of<VkDevice> GraphicsManager::make_device(VkPhysicalDevice phys_device,
                                                       std::vector<VkDeviceQueueCreateInfo> const &queue_infos,
                                                       std::vector<char const *> const &extension_names) {
     VkPhysicalDeviceFeatures features{};
@@ -145,7 +145,7 @@ shared_ptr_of<VkDevice> graphics_manager::make_device(VkPhysicalDevice phys_devi
     });
 }
 
-unique_ptr_of<VkRenderPass> graphics_manager::make_render_pass(shared_ptr_of<VkDevice> device, VkFormat format) {
+unique_ptr_of<VkRenderPass> GraphicsManager::make_render_pass(shared_ptr_of<VkDevice> device, VkFormat format) {
     VkAttachmentDescription attachment{
         .format = format,
         .samples = VK_SAMPLE_COUNT_1_BIT,
@@ -191,7 +191,7 @@ unique_ptr_of<VkRenderPass> graphics_manager::make_render_pass(shared_ptr_of<VkD
     });
 }
 
-unique_ptr_of<VkSwapchainKHR> graphics_manager::make_swapchain(shared_ptr_of<VkDevice> device,
+unique_ptr_of<VkSwapchainKHR> GraphicsManager::make_swapchain(shared_ptr_of<VkDevice> device,
                                                                VkSwapchainCreateInfoKHR const &swapchain_info) {
     VkSwapchainKHR swapchain;
     vk_assert(vkCreateSwapchainKHR(device.get(), &swapchain_info, nullptr, &swapchain), "Failed to create a swapchain.");
@@ -202,7 +202,7 @@ unique_ptr_of<VkSwapchainKHR> graphics_manager::make_swapchain(shared_ptr_of<VkD
 }
 
 shared_ptr_of<VkCommandPool>
-graphics_manager::make_command_pool(shared_ptr_of<VkDevice> device, VkCommandPoolCreateFlags create_flags, uint32_t qfm_index) {
+GraphicsManager::make_command_pool(shared_ptr_of<VkDevice> device, VkCommandPoolCreateFlags create_flags, uint32_t qfm_index) {
     VkCommandPoolCreateInfo command_pool_info{
         .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
         .pNext = nullptr,
@@ -218,7 +218,7 @@ graphics_manager::make_command_pool(shared_ptr_of<VkDevice> device, VkCommandPoo
 }
 
 unique_ptr_of<VkBuffer>
-graphics_manager::make_buffer(shared_ptr_of<VkDevice> device, size_t size, VkBufferUsageFlags usage, VkSharingMode mode) {
+GraphicsManager::make_buffer(shared_ptr_of<VkDevice> device, size_t size, VkBufferUsageFlags usage, VkSharingMode mode) {
     VkBufferCreateInfo info{
         .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
         .size = size,
@@ -233,7 +233,7 @@ graphics_manager::make_buffer(shared_ptr_of<VkDevice> device, size_t size, VkBuf
     });
 }
 
-unique_ptr_of<VkCommandBuffer> graphics_manager::make_command_buffer(shared_ptr_of<VkDevice> device,
+unique_ptr_of<VkCommandBuffer> GraphicsManager::make_command_buffer(shared_ptr_of<VkDevice> device,
                                                                      shared_ptr_of<VkCommandPool> command_pool) {
     VkCommandBufferAllocateInfo allocate_info{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
@@ -249,7 +249,7 @@ unique_ptr_of<VkCommandBuffer> graphics_manager::make_command_buffer(shared_ptr_
     });
 }
 
-unique_ptr_of<VkFramebuffer> graphics_manager::make_framebuffer(shared_ptr_of<VkDevice> device,
+unique_ptr_of<VkFramebuffer> GraphicsManager::make_framebuffer(shared_ptr_of<VkDevice> device,
                                                                 VkImageView image_view,
                                                                 VkRenderPass render_pass,
                                                                 VkFormat format,
@@ -271,7 +271,7 @@ unique_ptr_of<VkFramebuffer> graphics_manager::make_framebuffer(shared_ptr_of<Vk
     });
 }
 
-unique_ptr_of<VkImageView> graphics_manager::make_image_view(shared_ptr_of<VkDevice> device, VkImage image, VkFormat format) {
+unique_ptr_of<VkImageView> GraphicsManager::make_image_view(shared_ptr_of<VkDevice> device, VkImage image, VkFormat format) {
     VkImageViewCreateInfo image_view_info{
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = image,
@@ -302,7 +302,7 @@ unique_ptr_of<VkImageView> graphics_manager::make_image_view(shared_ptr_of<VkDev
 }
 
 unique_ptr_of<VkDeviceMemory>
-graphics_manager::make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index) {
+GraphicsManager::make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index) {
     VkMemoryAllocateInfo info{
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = size,
@@ -316,7 +316,7 @@ graphics_manager::make_device_memory(shared_ptr_of<VkDevice> device, size_t size
     });
 }
 
-unique_ptr_of<VkFence> graphics_manager::make_fence(shared_ptr_of<VkDevice> device) {
+unique_ptr_of<VkFence> GraphicsManager::make_fence(shared_ptr_of<VkDevice> device) {
     VkFenceCreateInfo fence_info{
         .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         .flags = VK_FENCE_CREATE_SIGNALED_BIT,
@@ -329,7 +329,7 @@ unique_ptr_of<VkFence> graphics_manager::make_fence(shared_ptr_of<VkDevice> devi
     });
 }
 
-unique_ptr_of<VkSemaphore> graphics_manager::make_semaphore(shared_ptr_of<VkDevice> device) {
+unique_ptr_of<VkSemaphore> GraphicsManager::make_semaphore(shared_ptr_of<VkDevice> device) {
     VkSemaphoreCreateInfo semaphore_info{
         .sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
     };
@@ -341,7 +341,7 @@ unique_ptr_of<VkSemaphore> graphics_manager::make_semaphore(shared_ptr_of<VkDevi
     });
 }
 
-unique_ptr_of<VkPipelineLayout> graphics_manager::make_pipeline_layout(shared_ptr_of<VkDevice> device,
+unique_ptr_of<VkPipelineLayout> GraphicsManager::make_pipeline_layout(shared_ptr_of<VkDevice> device,
                                                                        std::vector<VkDescriptorSetLayout> const &set_layouts,
                                                                        std::vector<VkPushConstantRange> const &push_constant_ranges) {
     VkPipelineLayoutCreateInfo layout_info{
@@ -359,7 +359,7 @@ unique_ptr_of<VkPipelineLayout> graphics_manager::make_pipeline_layout(shared_pt
     });
 }
 
-unique_ptr_of<VkShaderModule> graphics_manager::make_shader_module(shared_ptr_of<VkDevice> device, std::string_view filename) {
+unique_ptr_of<VkShaderModule> GraphicsManager::make_shader_module(shared_ptr_of<VkDevice> device, std::string_view filename) {
     auto buffer = read_shader(device, filename);
     VkShaderModuleCreateInfo info{
         .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
@@ -374,7 +374,7 @@ unique_ptr_of<VkShaderModule> graphics_manager::make_shader_module(shared_ptr_of
     });
 }
 
-VkPipelineShaderStageCreateInfo graphics_manager::make_shader_stage(VkShaderModule shader_module, VkShaderStageFlagBits stage) {
+VkPipelineShaderStageCreateInfo GraphicsManager::make_shader_stage(VkShaderModule shader_module, VkShaderStageFlagBits stage) {
     return VkPipelineShaderStageCreateInfo{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
         .stage = stage,
@@ -383,7 +383,7 @@ VkPipelineShaderStageCreateInfo graphics_manager::make_shader_stage(VkShaderModu
     };
 }
 
-unique_ptr_of<VkPipeline> graphics_manager::make_pipeline(shared_ptr_of<VkDevice> device,
+unique_ptr_of<VkPipeline> GraphicsManager::make_pipeline(shared_ptr_of<VkDevice> device,
                                                           VkGraphicsPipelineCreateInfo const &pipeline_info) {
     VkPipeline pipeline;
     vk_assert(vkCreateGraphicsPipelines(device.get(), nullptr, 1, &pipeline_info, nullptr, &pipeline), "Failed to create a pipeline.");

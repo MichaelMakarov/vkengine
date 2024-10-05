@@ -11,14 +11,14 @@ namespace {
 
 }
 
-swapchain_presenter::swapchain_presenter(shared_ptr_of<VkDevice> device, VkQueue graphics_queue, VkQueue present_queue)
+SwapchainPresenter::SwapchainPresenter(shared_ptr_of<VkDevice> device, uint32_t graphics_qfm, uint32_t present_qfm)
     : device_{device}
-    , sync_fence_{graphics_manager::make_fence(device)}
-    , graphics_queue_{graphics_queue}
-    , present_queue_{present_queue} {
+    , sync_fence_{GraphicsManager::make_fence(device)} {
+    vkGetDeviceQueue(device.get(), graphics_qfm, 0, &graphics_queue_);
+    vkGetDeviceQueue(device.get(), present_qfm, 0, &present_queue_); 
 }
 
-void swapchain_presenter::submit_and_present(swapchain_context &swapchain_ctx) {
+void SwapchainPresenter::submit_and_present(SwapchainContext &swapchain_ctx) {
     size_t constexpr swapchains_count = 1;
     auto const &image_ctx = swapchain_ctx.get_image();
     std::array<VkSemaphore, swapchains_count> submit_semaphores{image_ctx.get_submit_semaphore()};

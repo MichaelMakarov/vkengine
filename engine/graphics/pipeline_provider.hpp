@@ -2,9 +2,9 @@
 
 #include "graphics_types.hpp"
 
-class pipeline_provider {
+class PipelineProvider {
   public:
-    virtual ~pipeline_provider() = default;
+    virtual ~PipelineProvider() = default;
 
     virtual void update_command_buffer(VkCommandBuffer command_buffer) = 0;
 

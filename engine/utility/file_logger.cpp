@@ -2,7 +2,7 @@
 
 #include "error.hpp"
 
-file_logger::file_logger(std::string_view filename)
+FileLogger::FileLogger(std::string_view filename)
 {
     fout_.open(filename.data());
     if (!fout_.is_open()) {
@@ -10,6 +10,6 @@ file_logger::file_logger(std::string_view filename)
     }
 }
 
-void file_logger::print(std::string_view str) {
+void FileLogger::print(std::string_view str) {
     fout_ << str;
 }

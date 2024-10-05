@@ -7,15 +7,15 @@
 #include <vector>
 #include <string>
 
-struct physical_device {
+struct PhysicalDevice {
     VkPhysicalDevice device;
     VkPhysicalDeviceProperties properties;
     VkPhysicalDeviceFeatures features;
-    std::vector<queue_family> graphics_qfms;
-    std::vector<queue_family> transfer_qfms;
-    std::vector<queue_family> compute_qfms;
+    std::vector<QueueFamily> graphics_qfms;
+    std::vector<QueueFamily> transfer_qfms;
+    std::vector<QueueFamily> compute_qfms;
 
-    static std::vector<physical_device> get_physical_devices(VkInstance instance, VkSurfaceKHR surface);
+    static std::vector<PhysicalDevice> get_physical_devices(VkInstance instance, VkSurfaceKHR surface);
 
     std::string get_name() const;
 };

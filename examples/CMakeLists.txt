@@ -9,5 +9,5 @@ function (compile_shaders target)
 endfunction()
 
 add_subdirectory(black_window)
-add_subdirectory(triangle_switch_color)
-add_subdirectory(triangle_from_memory)
+add_subdirectory(triangle_color)
+add_subdirectory(memory_buffer)

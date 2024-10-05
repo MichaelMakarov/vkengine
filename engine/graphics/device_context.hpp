@@ -4,20 +4,16 @@
 
 #include "queue_family.hpp"
 
-class device_context {
+class DeviceContext {
     VkPhysicalDevice phys_device_;
     shared_ptr_of<VkDevice> device_;
-    queue_family graphics_qfm_;
-    queue_family present_qfm_;
-    queue_family compute_qfm_;
-    queue_family transfer_qfm_;
-    VkQueue graphics_queue_{nullptr};
-    VkQueue present_queue_{nullptr};
-    VkQueue compute_queue_{nullptr};
-    VkQueue transfer_queue_{nullptr};
+    QueueFamily graphics_qfm_;
+    QueueFamily present_qfm_;
+    QueueFamily compute_qfm_;
+    QueueFamily transfer_qfm_;
 
   public:
-    device_context(VkInstance instance, VkSurfaceKHR surface);
+    DeviceContext(VkInstance instance, VkSurfaceKHR surface);
 
     VkPhysicalDevice get_physical_device() const {
         return phys_device_;
@@ -35,19 +31,11 @@ class device_context {
         return present_qfm_.index;
     }
 
-    VkQueue get_graphics_queue() const {
-        return graphics_queue_;
+    uint32_t get_compute_qfm() const {
+        return compute_qfm_.index;
     }
 
-    VkQueue get_present_queue() const {
-        return present_queue_;
-    }
-
-    VkQueue get_compute_queue() const {
-        return compute_queue_;
-    }
-
-    VkQueue get_transfer_queue() const {
-        return transfer_queue_;
+    uint32_t get_transfer_qfm() const {
+        return transfer_qfm_.index;
     }
 };

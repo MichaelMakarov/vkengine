@@ -6,7 +6,7 @@
 
 #include <GLFW/glfw3.h>
 
-class window_context {
+class WindowContext {
     resize_callback_t resize_callback_;
     cursor_callback_t cursor_callback_;
     keyboard_callback_t keyboard_callback_;
@@ -64,7 +64,7 @@ class window_context {
         }
     }
 
-    static unique_ptr_of<GLFWwindow *> make_window(window_info const &info);
+    static unique_ptr_of<GLFWwindow *> make_window(WindowConfig const &info);
 
-    static window_context *get_window_context(GLFWwindow *window);
+    static WindowContext *get_window_context(GLFWwindow *window);
 };

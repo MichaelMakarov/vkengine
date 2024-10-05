@@ -2,7 +2,7 @@
 
 #include "graphics_types.hpp"
 
-struct queue_family {
+struct QueueFamily {
     VkQueueFamilyProperties properties;
     uint32_t index;
 };

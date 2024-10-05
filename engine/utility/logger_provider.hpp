@@ -3,7 +3,7 @@
 #include <string_view>
 #include <format>
 
-class logger_provider {
+class LoggerProvider {
   public:
     static void println(std::string_view str);
 
@@ -17,7 +17,7 @@ class logger_provider {
 #endif
 
 #if defined DEBUG_APP
-#define debug_println(fmt, ...) logger_provider::println(std::format(fmt, __VA_ARGS__))
+#define debug_println(fmt, ...) LoggerProvider::println(std::format(fmt, __VA_ARGS__))
 #else
 #define debug_println(fmt, ...)
 #endif

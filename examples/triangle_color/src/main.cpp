@@ -13,7 +13,7 @@ namespace {
         unique_ptr_of<VkShaderModule> fragment_shader_module_;
         unique_ptr_of<VkPipelineLayout> pipeline_layout_;
         unique_ptr_of<VkPipeline> pipeline_;
-        pipeline_builder builder_;
+        PipelineBuilder builder_;
         std::vector<VkPipelineShaderStageCreateInfo> shader_stages_;
         VkViewport viewport_{
             .x = 0,
@@ -25,17 +25,17 @@ namespace {
             .offset = {.x = 0, .y = 0},
             .extent = {.width = 0, .height = 0},
         };
-        VkPipelineColorBlendAttachmentState attachment_{pipeline_builder::default_color_blend_attachment()};
+        VkPipelineColorBlendAttachmentState attachment_{PipelineBuilder::default_color_blend_attachment()};
 
       public:
         triangle_pipeline(shared_ptr_of<VkDevice> device, std::string_view vertex_shader, std::string_view fragment_shader)
             : device_{device}
-            , vertex_shader_module_{graphics_manager::make_shader_module(device, vertex_shader)}
-            , fragment_shader_module_{graphics_manager::make_shader_module(device, fragment_shader)}
-            , pipeline_layout_{graphics_manager::make_pipeline_layout(device, {}, {})}
+            , vertex_shader_module_{GraphicsManager::make_shader_module(device, vertex_shader)}
+            , fragment_shader_module_{GraphicsManager::make_shader_module(device, fragment_shader)}
+            , pipeline_layout_{GraphicsManager::make_pipeline_layout(device, {}, {})}
             , shader_stages_(2) {
-            shader_stages_[0] = graphics_manager::make_shader_stage(vertex_shader_module_.get(), VK_SHADER_STAGE_VERTEX_BIT);
-            shader_stages_[1] = graphics_manager::make_shader_stage(fragment_shader_module_.get(), VK_SHADER_STAGE_FRAGMENT_BIT);
+            shader_stages_[0] = GraphicsManager::make_shader_stage(vertex_shader_module_.get(), VK_SHADER_STAGE_VERTEX_BIT);
+            shader_stages_[1] = GraphicsManager::make_shader_stage(fragment_shader_module_.get(), VK_SHADER_STAGE_FRAGMENT_BIT);
             builder_.set_shader_stages(shader_stages_.data(), shader_stages_.size());
             builder_.set_pipeline_layout(pipeline_layout_.get());
             builder_.set_viewport_state(VkPipelineViewportStateCreateInfo{
@@ -68,7 +68,7 @@ namespace {
         }
     };
 
-    class triangle_provider : public pipeline_provider {
+    class triangle_provider : public PipelineProvider {
         triangle_pipeline colorful_triangle_;
         triangle_pipeline monochrome_triangle_;
         triangle_pipeline *current_triangle_{nullptr};
@@ -110,7 +110,7 @@ namespace {
 
 int main() {
     try {
-        graphics_renderer renderer{window_info{
+        GraphicsRenderer renderer{WindowConfig{
             .title = "Hardcoded triangle application",
             .width = 600,
             .height = 600,
@@ -127,7 +127,7 @@ int main() {
         renderer.run();
 
     } catch (const std::exception &ex) {
-        logger_provider::println(ex.what());
+        LoggerProvider::println(ex.what());
         return 1;
     }
     return 0;

@@ -5,18 +5,18 @@
 
 #include <array>
 
-class vertex2d {
+class Vertex2d {
     glm::vec2 point_;
     glm::vec3 color_;
 
   public:
-    vertex2d(glm::vec2 const &point, glm::vec3 const &color)
+    Vertex2d(glm::vec2 const &point, glm::vec3 const &color)
         : point_{point}
         , color_{color} {
     }
 
-    vertex2d()
-        : vertex2d(glm::vec2(0.f, 0.f), glm::vec3(1.f, 1.f, 1.f)) {
+    Vertex2d()
+        : Vertex2d(glm::vec2(0.f, 0.f), glm::vec3(1.f, 1.f, 1.f)) {
     }
 
     glm::vec2 const &get_point() const {
@@ -40,20 +40,20 @@ class vertex2d {
     static std::array<VkVertexInputAttributeDescription, 2> get_attribute_description(uint32_t binding);
 };
 
-class vertex3d {
+class Vertex3d {
     glm::vec3 point_;
     glm::vec3 normal_;
     glm::vec3 color_;
 
   public:
-    vertex3d(glm::vec3 const &point, glm::vec3 normal, glm::vec3 color)
+    Vertex3d(glm::vec3 const &point, glm::vec3 normal, glm::vec3 color)
         : point_{point}
         , normal_{normal}
         , color_{color} {
     }
 
-    vertex3d()
-        : vertex3d(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f, 1.f, 1.f)) {
+    Vertex3d()
+        : Vertex3d(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f, 1.f, 1.f)) {
     }
 
     glm::vec3 const &get_point() const {

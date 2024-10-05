@@ -1,6 +1,8 @@
 add_library(
     engine_graphics STATIC
+    buffer_manager.cpp
     device_context.cpp 
+    graphics_manager.cpp 
     graphics_renderer.cpp 
     image_context.cpp 
     image_renderer.cpp 
@@ -10,7 +12,6 @@ add_library(
     pipeline_builder.cpp
     swapchain_context.cpp 
     swapchain_presenter.cpp 
-    graphics_manager.cpp 
     window_context.cpp
 )
 target_include_directories(

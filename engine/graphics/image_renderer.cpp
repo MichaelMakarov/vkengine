@@ -2,7 +2,7 @@
 
 #include "graphics_error.hpp"
 
-image_renderer::image_renderer(image_context const *image_ptr, VkRenderPass render_pass, VkExtent2D extent)
+ImageRenderer::ImageRenderer(ImageContext const *image_ptr, VkRenderPass render_pass, VkExtent2D extent)
     : image_ptr_{image_ptr}
     , render_pass_{render_pass}
     , rect_{.offset = {0, 0}, .extent = extent} {
@@ -11,7 +11,7 @@ image_renderer::image_renderer(image_context const *image_ptr, VkRenderPass rend
     }
 }
 
-VkCommandBuffer image_renderer::begin_render_pass() {
+VkCommandBuffer ImageRenderer::begin_render_pass() {
     VkCommandBuffer command_buffer = image_ptr_->get_command_buffer();
     vk_assert(vkResetCommandBuffer(command_buffer, 0), "Failed to reset the command buffer.");
     {
@@ -37,7 +37,7 @@ VkCommandBuffer image_renderer::begin_render_pass() {
     return command_buffer;
 }
 
-void image_renderer::end_render_pass() {
+void ImageRenderer::end_render_pass() {
     VkCommandBuffer command_buffer = image_ptr_->get_command_buffer();
     vkCmdEndRenderPass(command_buffer);
     vk_assert(vkEndCommandBuffer(command_buffer), "Failed to end the command buffer.");
