@@ -22,7 +22,7 @@ InstanceContext::InstanceContext(WindowConfig const &info) {
 #endif
     instance_ = GraphicsManager::make_instance("vk_renderer", extensions, layers);
 #if defined DEBUG_APP
-    debug_messenger_ = make_debug_messenger(instance_);
+    debug_messenger_ = GraphicsManager::make_debug_messenger(instance_);
 #endif
     window_ = WindowContext::make_window(info);
     surface_ = GraphicsManager::make_surface(instance_, window_.get());

@@ -2,21 +2,13 @@
 
 #include "device_context.hpp"
 #include "instance_context.hpp"
-#include "pipeline_provider.hpp"
 #include "swapchain_context.hpp"
 #include "swapchain_presenter.hpp"
-#include "window_info.hpp"
-
-struct rendering_info {
-    VkRenderPass render_pass;
-    VkExtent2D extent;
-};
-
-using rendering_changed_callback_t = std::function<void(rendering_info const &)>;
+#include "window_config.hpp"
 
 class GraphicsRenderer {
   public:
-    struct Settings {
+    struct Config {
         VkSurfaceFormatKHR surface_format{
             .format = VK_FORMAT_B8G8R8A8_UNORM,
             .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
@@ -27,44 +19,61 @@ class GraphicsRenderer {
         VkCompositeAlphaFlagBitsKHR composite_alpha{VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR};
     };
 
+    struct Context {
+        VkRenderPass render_pass;
+        VkExtent2D surface_extent;
+        uint32_t images_count;
+    };
+
+    using context_changed_t = std::function<void(Context const &)>;
+    using update_command_t = std::function<void(VkCommandBuffer, size_t)>;
+
   private:
-    Settings settings_;
-    InstanceContext instance_ctx_;
-    DeviceContext device_ctx_;
-    SwapchainContext swapchain_ctx_;
+    Config config_;
+    InstanceContext instance_context_;
+    DeviceContext device_context_;
+    SwapchainContext swapchain_context_;
     SwapchainPresenter swapchain_presenter_;
-    rendering_changed_callback_t rendering_changed_;
-    std::shared_ptr<PipelineProvider> pipeline_provider_;
+    context_changed_t context_changed_;
+    update_command_t update_command_;
 
   public:
     explicit GraphicsRenderer(WindowConfig const &info);
 
-    GraphicsRenderer(WindowConfig const &info, Settings const &settings);
+    GraphicsRenderer(WindowConfig const &info, Config const &settings);
 
     ~GraphicsRenderer();
 
     void run();
 
     DeviceContext const &get_device_context() const {
-        return device_ctx_;
+        return device_context_;
     }
 
-    void set_rendering_changed_callback(rendering_changed_callback_t const &callback);
+    void set_context_changed_callback(context_changed_t const &callback) {
+        context_changed_ = callback;
+    }
 
-    void set_cursor_callback(cursor_callback_t const &callback);
+    void set_update_command_callback(update_command_t const &callback) {
+        update_command_ = callback;
+    }
 
-    void set_keyboard_callback(keyboard_callback_t const &callback);
+    void set_update_frame_callback(SwapchainPresenter::update_frame_t const &callback) {
+        swapchain_presenter_.set_update_frame_callback(callback);
+    }
 
-    void set_mouse_button_callback(mouse_button_callback_t const &callback);
+    void set_cursor_callback(WindowConfig::cursor_t const &callback);
 
-    void set_mouse_scroll_callback(mouse_scroll_callback_t const &callback);
+    void set_keyboard_callback(WindowConfig::keyboard_t const &callback);
 
-    void set_pipeline_provider(std::shared_ptr<PipelineProvider> provider);
+    void set_mouse_button_callback(WindowConfig::mouse_button_t const &callback);
+
+    void set_mouse_scroll_callback(WindowConfig::mouse_scroll_t const &callback);
+
+    void update_render_pass();
 
   private:
     void on_window_resized(int width, int height);
-
-    void update_render_pass();
 
     void set_command_buffers();
 
@@ -72,7 +81,7 @@ class GraphicsRenderer {
 
     void wait_device() const;
 
-    SwapchainContext::config get_swapchain_context_info() const;
+    SwapchainContext::Config get_swapchain_context_info() const;
 
     VkPresentModeKHR get_supported_present_mode() const;
 

@@ -4,7 +4,6 @@ add_library(
     device_context.cpp 
     graphics_manager.cpp 
     graphics_renderer.cpp 
-    image_context.cpp 
     image_renderer.cpp 
     instance_context.cpp 
     memory_buffer.cpp

@@ -2,12 +2,6 @@
 
 #include <functional>
 
-struct WindowConfig {
-    char const *title;
-    int width;
-    int height;
-};
-
 enum class key_action {
     release = 0,
     press,
@@ -95,8 +89,14 @@ enum class mouse_button {
     middle,
 };
 
-using resize_callback_t = std::function<void(int w, int h)>;
-using cursor_callback_t = std::function<void(double x, double y)>;
-using keyboard_callback_t = std::function<void(key_value value, key_action action, key_modifier modifier)>;
-using mouse_button_callback_t = std::function<void(mouse_button button, key_action action, key_modifier modifier)>;
-using mouse_scroll_callback_t = std::function<void(double offset)>;
+struct WindowConfig {
+    using resize_t = std::function<void(int w, int h)>;
+    using cursor_t = std::function<void(double x, double y)>;
+    using keyboard_t = std::function<void(key_value value, key_action action, key_modifier modifier)>;
+    using mouse_button_t = std::function<void(mouse_button button, key_action action, key_modifier modifier)>;
+    using mouse_scroll_t = std::function<void(double offset)>;
+
+    char const *title;
+    int width;
+    int height;
+};

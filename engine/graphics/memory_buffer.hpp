@@ -2,7 +2,7 @@
 
 #include "graphics_types.hpp"
 
-#include <set>
+#include <vector>
 
 class MemoryBuffer {
   public:
@@ -34,7 +34,7 @@ class MemoryBuffer {
 
     static std::vector<MemoryBuffer> make_buffers(shared_ptr_of<VkDevice> device,
                                                   VkPhysicalDevice phys_device,
-                                                  std::initializer_list<Config> configs,
+                                                  std::vector<Config> const &configs,
                                                   VkMemoryPropertyFlags properties);
 
     VkBuffer get_buffer() const {

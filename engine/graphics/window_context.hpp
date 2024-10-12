@@ -1,36 +1,35 @@
 #pragma once
 
 #include "graphics_types.hpp"
-
-#include "window_info.hpp"
+#include "window_config.hpp"
 
 #include <GLFW/glfw3.h>
 
 class WindowContext {
-    resize_callback_t resize_callback_;
-    cursor_callback_t cursor_callback_;
-    keyboard_callback_t keyboard_callback_;
-    mouse_button_callback_t mouse_button_callback_;
-    mouse_scroll_callback_t mouse_scroll_callback_;
+    WindowConfig::resize_t resize_callback_;
+    WindowConfig::cursor_t cursor_callback_;
+    WindowConfig::keyboard_t keyboard_callback_;
+    WindowConfig::mouse_button_t mouse_button_callback_;
+    WindowConfig::mouse_scroll_t mouse_scroll_callback_;
 
   public:
-    void set_resize_callback(resize_callback_t const &callback) {
+    void set_resize_callback(WindowConfig::resize_t const &callback) {
         resize_callback_ = callback;
     }
 
-    void set_cursor_callback(cursor_callback_t const &callback) {
+    void set_cursor_callback(WindowConfig::cursor_t const &callback) {
         cursor_callback_ = callback;
     }
 
-    void set_keyboard_callback(keyboard_callback_t const &callback) {
+    void set_keyboard_callback(WindowConfig::keyboard_t const &callback) {
         keyboard_callback_ = callback;
     }
 
-    void set_mouse_button_callback(mouse_button_callback_t const &callback) {
+    void set_mouse_button_callback(WindowConfig::mouse_button_t const &callback) {
         mouse_button_callback_ = callback;
     }
 
-    void set_mouse_scroll_callback(mouse_scroll_callback_t const &callback) {
+    void set_mouse_scroll_callback(WindowConfig::mouse_scroll_t const &callback) {
         mouse_scroll_callback_ = callback;
     }
 

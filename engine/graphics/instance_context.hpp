@@ -2,7 +2,7 @@
 
 #include "graphics_types.hpp"
 
-#include "window_info.hpp"
+#include "window_config.hpp"
 
 #include <GLFW/glfw3.h>
 

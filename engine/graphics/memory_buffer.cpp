@@ -53,7 +53,7 @@ MemoryBuffer::MemoryBuffer(shared_ptr_of<VkDevice> device, VkPhysicalDevice phys
 
 std::vector<MemoryBuffer> MemoryBuffer::make_buffers(shared_ptr_of<VkDevice> device,
                                                      VkPhysicalDevice phys_device,
-                                                     std::initializer_list<Config> configs,
+                                                     std::vector<Config> const &configs,
                                                      VkMemoryPropertyFlags properties) {
     std::vector<MemoryBuffer> buffers;
     buffers.reserve(configs.size());

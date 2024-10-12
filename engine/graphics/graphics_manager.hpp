@@ -4,8 +4,8 @@
 
 #include <GLFW/glfw3.h>
 
-#include <vector>
 #include <string_view>
+#include <vector>
 
 class GraphicsManager {
   public:
@@ -46,10 +46,18 @@ class GraphicsManager {
                                                                 std::vector<VkDescriptorSetLayout> const &set_layouts,
                                                                 std::vector<VkPushConstantRange> const &push_constant_ranges);
 
-    static unique_ptr_of<VkShaderModule>
-    make_shader_module(shared_ptr_of<VkDevice> device, std::string_view filename);
+    static unique_ptr_of<VkShaderModule> make_shader_module(shared_ptr_of<VkDevice> device, std::string_view filename);
 
     static VkPipelineShaderStageCreateInfo make_shader_stage(VkShaderModule shader_module, VkShaderStageFlagBits stage);
 
     static unique_ptr_of<VkPipeline> make_pipeline(shared_ptr_of<VkDevice> device, VkGraphicsPipelineCreateInfo const &pipeline_info);
+
+    static unique_ptr_of<VkDescriptorSetLayout> make_descriptor_set_layout(shared_ptr_of<VkDevice> device,
+                                                                           std::vector<VkDescriptorSetLayoutBinding> const &bindings);
+
+    static unique_ptr_of<VkDescriptorPool> make_descriptor_pool(shared_ptr_of<VkDevice> device,
+                                                                std::vector<VkDescriptorPoolSize> const &pool_sizes);
+
+    static std::vector<VkDescriptorSet>
+    allocate_descriptor_sets(shared_ptr_of<VkDevice> device, VkDescriptorPool pool, std::vector<VkDescriptorSetLayout> const &layouts);
 };

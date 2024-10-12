@@ -7,7 +7,7 @@
 
 namespace {
 
-    class triangle_pipeline {
+    class TrianglePipeline {
         shared_ptr_of<VkDevice> device_;
         unique_ptr_of<VkShaderModule> vertex_shader_module_;
         unique_ptr_of<VkShaderModule> fragment_shader_module_;
@@ -28,7 +28,7 @@ namespace {
         VkPipelineColorBlendAttachmentState attachment_{PipelineBuilder::default_color_blend_attachment()};
 
       public:
-        triangle_pipeline(shared_ptr_of<VkDevice> device, std::string_view vertex_shader, std::string_view fragment_shader)
+        TrianglePipeline(shared_ptr_of<VkDevice> device, std::string_view vertex_shader, std::string_view fragment_shader)
             : device_{device}
             , vertex_shader_module_{GraphicsManager::make_shader_module(device, vertex_shader)}
             , fragment_shader_module_{GraphicsManager::make_shader_module(device, fragment_shader)}
@@ -54,10 +54,10 @@ namespace {
             });
         }
 
-        void update_pipeline(rendering_info const &info) {
-            viewport_.width = static_cast<float>(info.extent.width);
-            viewport_.height = static_cast<float>(info.extent.height);
-            scissor_.extent = info.extent;
+        void update_pipeline(GraphicsRenderer::Context const &info) {
+            viewport_.width = static_cast<float>(info.surface_extent.width);
+            viewport_.height = static_cast<float>(info.surface_extent.height);
+            scissor_.extent = info.surface_extent;
             builder_.set_render_pass(info.render_pass);
             pipeline_ = builder_.make_pipeline(device_);
         }
@@ -68,28 +68,28 @@ namespace {
         }
     };
 
-    class triangle_provider : public PipelineProvider {
-        triangle_pipeline colorful_triangle_;
-        triangle_pipeline monochrome_triangle_;
-        triangle_pipeline *current_triangle_{nullptr};
+    class TriangleProvider {
+        TrianglePipeline colorful_triangle_;
+        TrianglePipeline monochrome_triangle_;
+        TrianglePipeline *current_triangle_{nullptr};
         std::function<void()> callback_;
 
       public:
-        triangle_provider(shared_ptr_of<VkDevice> device)
+        TriangleProvider(shared_ptr_of<VkDevice> device)
             : colorful_triangle_{device, "colorful_triangle.vert.spv", "colorful_triangle.frag.spv"}
             , monochrome_triangle_{device, "monochrome_triangle.vert.spv", "monochrome_triangle.frag.spv"}
             , current_triangle_{&monochrome_triangle_} {
         }
 
-        void update_command_buffer(VkCommandBuffer command_buffer) override {
+        void update_command_buffer(VkCommandBuffer command_buffer) {
             current_triangle_->draw(command_buffer);
         }
 
-        void set_update_rendering(std::function<void()> const &callback) override {
+        void set_update_rendering(std::function<void()> const &callback) {
             callback_ = callback;
         }
 
-        void update_rendering(rendering_info const &info) {
+        void update_rendering(GraphicsRenderer::Context const &info) {
             colorful_triangle_.update_pipeline(info);
             monochrome_triangle_.update_pipeline(info);
         }
@@ -109,6 +109,7 @@ namespace {
 } // namespace
 
 int main() {
+    using namespace std::placeholders;
     try {
         GraphicsRenderer renderer{WindowConfig{
             .title = "Hardcoded triangle application",
@@ -116,14 +117,15 @@ int main() {
             .height = 600,
         }};
         auto device = renderer.get_device_context().get_device();
-        auto provider = std::make_shared<triangle_provider>(device);
-        renderer.set_pipeline_provider(provider);
-        renderer.set_keyboard_callback([provider](key_value value, key_action action, key_modifier modifier) {
+        TriangleProvider provider(device);
+        renderer.set_keyboard_callback([&provider, &renderer](key_value value, key_action action, key_modifier modifier) {
             if (value == key_value::key_space && action == key_action::release) {
-                provider->change_pipeline();
+                provider.change_pipeline();
+                renderer.update_render_pass();
             }
         });
-        renderer.set_rendering_changed_callback([provider](rendering_info const &info) { provider->update_rendering(info); });
+        renderer.set_context_changed_callback(std::bind(&TriangleProvider::update_rendering, &provider, _1));
+        renderer.set_update_command_callback(std::bind(&TriangleProvider::update_command_buffer, &provider, _1));
         renderer.run();
 
     } catch (const std::exception &ex) {

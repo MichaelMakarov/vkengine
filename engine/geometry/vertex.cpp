@@ -9,20 +9,20 @@ VkVertexInputBindingDescription Vertex2d::get_binding_description(uint32_t bindi
 }
 
 std::array<VkVertexInputAttributeDescription, 2> Vertex2d::get_attribute_description(uint32_t binding) {
-    std::array<VkVertexInputAttributeDescription, 2> descriptions;
-    descriptions[0] = VkVertexInputAttributeDescription{
-        .location = 0,
-        .binding = binding,
-        .format = VK_FORMAT_R32G32_SFLOAT,
-        .offset = offsetof(Vertex2d, point_),
+    return {
+        VkVertexInputAttributeDescription{
+            .location = 0,
+            .binding = binding,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = offsetof(Vertex2d, point),
+        },
+        VkVertexInputAttributeDescription{
+            .location = 1,
+            .binding = binding,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(Vertex2d, color),
+        },
     };
-    descriptions[1] = VkVertexInputAttributeDescription{
-        .location = 1,
-        .binding = binding,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = offsetof(Vertex2d, color_),
-    };
-    return descriptions;
 }
 
 VkVertexInputBindingDescription Vertex3d::get_binding_description(uint32_t binding) {
@@ -33,25 +33,31 @@ VkVertexInputBindingDescription Vertex3d::get_binding_description(uint32_t bindi
     };
 }
 
-std::array<VkVertexInputAttributeDescription, 3> Vertex3d::get_attribute_description(uint32_t binding) {
-    std::array<VkVertexInputAttributeDescription, 3> descriptions;
-    descriptions[0] = VkVertexInputAttributeDescription{
-        .location = 0,
-        .binding = binding,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = offsetof(Vertex3d, point_),
+std::array<VkVertexInputAttributeDescription, 4> Vertex3d::get_attribute_description(uint32_t binding) {
+    return {
+        VkVertexInputAttributeDescription{
+            .location = 0,
+            .binding = binding,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(Vertex3d, point),
+        },
+        VkVertexInputAttributeDescription{
+            .location = 1,
+            .binding = binding,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(Vertex3d, normal),
+        },
+        VkVertexInputAttributeDescription{
+            .location = 2,
+            .binding = binding,
+            .format = VK_FORMAT_R32G32B32_SFLOAT,
+            .offset = offsetof(Vertex3d, color),
+        },
+        VkVertexInputAttributeDescription{
+            .location = 3,
+            .binding = binding,
+            .format = VK_FORMAT_R8G8_UNORM,
+            .offset = offsetof(Vertex3d, texture),
+        },
     };
-    descriptions[1] = VkVertexInputAttributeDescription{
-        .location = 1,
-        .binding = binding,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = offsetof(Vertex3d, normal_),
-    };
-    descriptions[2] = VkVertexInputAttributeDescription{
-        .location = 2,
-        .binding = binding,
-        .format = VK_FORMAT_R32G32B32_SFLOAT,
-        .offset = offsetof(Vertex3d, color_),
-    };
-    return descriptions;
 }

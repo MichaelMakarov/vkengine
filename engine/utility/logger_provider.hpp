@@ -1,5 +1,7 @@
 #pragma once
 
+#include "debug.hpp"
+
 #include <string_view>
 #include <format>
 
@@ -11,10 +13,6 @@ class LoggerProvider {
 
     static void make_file_logger(std::string_view filename);
 };
-
-#if defined DEBUG || _DEBUG
-#define DEBUG_APP
-#endif
 
 #if defined DEBUG_APP
 #define debug_println(fmt, ...) LoggerProvider::println(std::format(fmt, __VA_ARGS__))

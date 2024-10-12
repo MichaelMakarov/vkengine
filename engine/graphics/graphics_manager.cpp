@@ -58,9 +58,8 @@ namespace {
 
 } // namespace
 
-shared_ptr_of<VkInstance> GraphicsManager::make_instance(char const *app_name,
-                                                          std::vector<char const *> const &extensions,
-                                                          std::vector<char const *> const &layers) {
+shared_ptr_of<VkInstance>
+GraphicsManager::make_instance(char const *app_name, std::vector<char const *> const &extensions, std::vector<char const *> const &layers) {
     VkApplicationInfo app_info{
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName = app_name,
@@ -126,8 +125,8 @@ unique_ptr_of<VkSurfaceKHR> GraphicsManager::make_surface(shared_ptr_of<VkInstan
 }
 
 shared_ptr_of<VkDevice> GraphicsManager::make_device(VkPhysicalDevice phys_device,
-                                                      std::vector<VkDeviceQueueCreateInfo> const &queue_infos,
-                                                      std::vector<char const *> const &extension_names) {
+                                                     std::vector<VkDeviceQueueCreateInfo> const &queue_infos,
+                                                     std::vector<char const *> const &extension_names) {
     VkPhysicalDeviceFeatures features{};
     VkDeviceCreateInfo info{
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
@@ -192,7 +191,7 @@ unique_ptr_of<VkRenderPass> GraphicsManager::make_render_pass(shared_ptr_of<VkDe
 }
 
 unique_ptr_of<VkSwapchainKHR> GraphicsManager::make_swapchain(shared_ptr_of<VkDevice> device,
-                                                               VkSwapchainCreateInfoKHR const &swapchain_info) {
+                                                              VkSwapchainCreateInfoKHR const &swapchain_info) {
     VkSwapchainKHR swapchain;
     vk_assert(vkCreateSwapchainKHR(device.get(), &swapchain_info, nullptr, &swapchain), "Failed to create a swapchain.");
     return unique_ptr_of<VkSwapchainKHR>(swapchain, [device](VkSwapchainKHR swapchain) {
@@ -234,7 +233,7 @@ GraphicsManager::make_buffer(shared_ptr_of<VkDevice> device, size_t size, VkBuff
 }
 
 unique_ptr_of<VkCommandBuffer> GraphicsManager::make_command_buffer(shared_ptr_of<VkDevice> device,
-                                                                     shared_ptr_of<VkCommandPool> command_pool) {
+                                                                    shared_ptr_of<VkCommandPool> command_pool) {
     VkCommandBufferAllocateInfo allocate_info{
         .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
         .commandPool = command_pool.get(),
@@ -250,10 +249,10 @@ unique_ptr_of<VkCommandBuffer> GraphicsManager::make_command_buffer(shared_ptr_o
 }
 
 unique_ptr_of<VkFramebuffer> GraphicsManager::make_framebuffer(shared_ptr_of<VkDevice> device,
-                                                                VkImageView image_view,
-                                                                VkRenderPass render_pass,
-                                                                VkFormat format,
-                                                                VkExtent2D extent) {
+                                                               VkImageView image_view,
+                                                               VkRenderPass render_pass,
+                                                               VkFormat format,
+                                                               VkExtent2D extent) {
     VkFramebufferCreateInfo framebuffer_info{
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .renderPass = render_pass,
@@ -301,8 +300,7 @@ unique_ptr_of<VkImageView> GraphicsManager::make_image_view(shared_ptr_of<VkDevi
     });
 }
 
-unique_ptr_of<VkDeviceMemory>
-GraphicsManager::make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index) {
+unique_ptr_of<VkDeviceMemory> GraphicsManager::make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index) {
     VkMemoryAllocateInfo info{
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = size,
@@ -342,8 +340,8 @@ unique_ptr_of<VkSemaphore> GraphicsManager::make_semaphore(shared_ptr_of<VkDevic
 }
 
 unique_ptr_of<VkPipelineLayout> GraphicsManager::make_pipeline_layout(shared_ptr_of<VkDevice> device,
-                                                                       std::vector<VkDescriptorSetLayout> const &set_layouts,
-                                                                       std::vector<VkPushConstantRange> const &push_constant_ranges) {
+                                                                      std::vector<VkDescriptorSetLayout> const &set_layouts,
+                                                                      std::vector<VkPushConstantRange> const &push_constant_ranges) {
     VkPipelineLayoutCreateInfo layout_info{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = static_cast<uint32_t>(set_layouts.size()),
@@ -384,7 +382,7 @@ VkPipelineShaderStageCreateInfo GraphicsManager::make_shader_stage(VkShaderModul
 }
 
 unique_ptr_of<VkPipeline> GraphicsManager::make_pipeline(shared_ptr_of<VkDevice> device,
-                                                          VkGraphicsPipelineCreateInfo const &pipeline_info) {
+                                                         VkGraphicsPipelineCreateInfo const &pipeline_info) {
     VkPipeline pipeline;
     vk_assert(vkCreateGraphicsPipelines(device.get(), nullptr, 1, &pipeline_info, nullptr, &pipeline), "Failed to create a pipeline.");
     return unique_ptr_of<VkPipeline>(pipeline, [device](VkPipeline pipeline) {
@@ -393,4 +391,51 @@ unique_ptr_of<VkPipeline> GraphicsManager::make_pipeline(shared_ptr_of<VkDevice>
     });
 }
 
+unique_ptr_of<VkDescriptorSetLayout>
+GraphicsManager::make_descriptor_set_layout(shared_ptr_of<VkDevice> device, std::vector<VkDescriptorSetLayoutBinding> const &bindings) {
+    VkDescriptorSetLayoutCreateInfo info{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+        .bindingCount = static_cast<uint32_t>(bindings.size()),
+        .pBindings = bindings.data(),
+    };
+    VkDescriptorSetLayout layout;
+    vk_assert(vkCreateDescriptorSetLayout(device.get(), &info, nullptr, &layout), "Failed to create descriptor set layout.");
+    return unique_ptr_of<VkDescriptorSetLayout>(layout, [device](VkDescriptorSetLayout layout) {
+        debug_println("delete descriptor set layout");
+        vkDestroyDescriptorSetLayout(device.get(), layout, nullptr);
+    });
+}
 
+unique_ptr_of<VkDescriptorPool> GraphicsManager::make_descriptor_pool(shared_ptr_of<VkDevice> device,
+                                                                      std::vector<VkDescriptorPoolSize> const &pool_sizes) {
+    uint32_t total_count = 0;
+    for (auto const &pool_size : pool_sizes) {
+        total_count += pool_size.descriptorCount;
+    }
+    VkDescriptorPoolCreateInfo info{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+        .maxSets = total_count,
+        .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
+        .pPoolSizes = pool_sizes.data(),
+    };
+    VkDescriptorPool descriptor_pool;
+    vk_assert(vkCreateDescriptorPool(device.get(), &info, nullptr, &descriptor_pool), "Failed to create a descriptor pool.");
+    return unique_ptr_of<VkDescriptorPool>(descriptor_pool, [device](VkDescriptorPool descriptor_pool) {
+        debug_println("delete descriptor pool");
+        vkDestroyDescriptorPool(device.get(), descriptor_pool, nullptr);
+    });
+}
+
+std::vector<VkDescriptorSet> GraphicsManager::allocate_descriptor_sets(shared_ptr_of<VkDevice> device,
+                                                                       VkDescriptorPool pool,
+                                                                       std::vector<VkDescriptorSetLayout> const &layouts) {
+    VkDescriptorSetAllocateInfo info{
+        .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+        .descriptorPool = pool,
+        .descriptorSetCount = static_cast<uint32_t>(layouts.size()),
+        .pSetLayouts = layouts.data(),
+    };
+    std::vector<VkDescriptorSet> descriptor_sets(layouts.size());
+    vk_assert(vkAllocateDescriptorSets(device.get(), &info, descriptor_sets.data()), "Failed to allocate descriptor sets.");
+    return descriptor_sets;
+}

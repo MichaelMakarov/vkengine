@@ -2,17 +2,25 @@
 
 #include "graphics_types.hpp"
 
-#include "swapchain_context.hpp"
+#include "image_context.hpp"
 
 class SwapchainPresenter {
+  public:
+    using update_frame_t = std::function<void(size_t frame_index)>;
+
+  private:
     shared_ptr_of<VkDevice> device_;
     unique_ptr_of<VkFence> sync_fence_;
     VkQueue graphics_queue_;
     VkQueue present_queue_;
-
+    update_frame_t frame_callback_;
 
   public:
     SwapchainPresenter(shared_ptr_of<VkDevice> device, uint32_t graphics_qfm, uint32_t present_qfm);
 
-    void submit_and_present(SwapchainContext &swapchain_ctx);
+    void submit_and_present(VkSwapchainKHR swapchain, ImageContext const &image_context);
+
+    void set_update_frame_callback(update_frame_t const &callback) {
+        frame_callback_ = callback;
+    }
 };

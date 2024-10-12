@@ -7,7 +7,7 @@
 
 class SwapchainContext {
   public:
-    struct config {
+    struct Config {
         VkSurfaceKHR surface;
         VkSurfaceFormatKHR surface_format;
         VkPresentModeKHR present_mode;
@@ -20,6 +20,23 @@ class SwapchainContext {
     };
 
   private:
+    class IndexSequence {
+        size_t size_;
+        size_t index_;
+
+      public:
+        IndexSequence(size_t size = 0)
+            : size_{size}
+            , index_{0} {
+        }
+
+        size_t get_index() {
+            size_t index = index_++;
+            index_ %= size_;
+            return index;
+        }
+    };
+
     shared_ptr_of<VkDevice> device_;
     shared_ptr_of<VkCommandPool> command_pool_;
     std::vector<uint32_t> qfm_indices_;
@@ -27,10 +44,10 @@ class SwapchainContext {
     unique_ptr_of<VkSwapchainKHR> swapchain_;
     unique_ptr_of<VkRenderPass> render_pass_;
     std::vector<ImageContext> image_contexts_;
-    size_t image_index_ = 0;
+    IndexSequence index_sequence_;
 
   public:
-    SwapchainContext(shared_ptr_of<VkDevice> device, config const &info);
+    SwapchainContext(shared_ptr_of<VkDevice> device, Config const &info);
 
     ~SwapchainContext();
 
@@ -44,10 +61,14 @@ class SwapchainContext {
         return render_pass_.get();
     }
 
+    uint32_t get_images_count() const {
+        return static_cast<uint32_t>(image_contexts_.size());
+    }
+
     void update_extent(VkExtent2D extent);
 
     std::vector<ImageRenderer> get_image_renderers() const;
 
   private:
-    static std::vector<uint32_t> make_queue_family_indices(config const &info);
+    static std::vector<uint32_t> make_queue_family_indices(Config const &info);
 };

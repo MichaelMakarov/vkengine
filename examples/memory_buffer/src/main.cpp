@@ -1,3 +1,6 @@
+#include "matrix.hpp"
+#include "plain_mesh.hpp"
+
 #include "geometry/vertex.hpp"
 #include "graphics/buffer_manager.hpp"
 #include "graphics/graphics_manager.hpp"
@@ -10,62 +13,14 @@
 
 namespace {
 
-    class VertexProvider {
-        const std::vector<Vertex2d> vertices_;
-
-      public:
-        VertexProvider()
-            : vertices_{
-                  Vertex2d(glm::vec2(-0.5f, 0.5f), glm::vec3(1.0f, 0.0f, 0.0f)),
-                  Vertex2d(glm::vec2(0.5f, 0.5f), glm::vec3(0.0f, 1.0f, 0.0f)),
-                  Vertex2d(glm::vec2(0.5f, -0.5f), glm::vec3(0.0f, 0.0f, 1.0f)),
-                  Vertex2d(glm::vec2(-0.5f, -0.5f), glm::vec3(1.0f, 1.0f, 1.0f)),
-              } {
-        }
-
-        uint32_t get_count() const {
-            return static_cast<uint32_t>(vertices_.size());
-        }
-
-        size_t get_data_size() const {
-            return sizeof(vertices_[0]) * vertices_.size();
-        }
-
-        void const *get_data_ptr() const {
-            return vertices_.data();
-        }
-    };
-
-    class IndexProvider {
-        const std::vector<uint16_t> indices_;
-
-      public:
-        IndexProvider()
-            : indices_{0, 1, 2, 2, 3, 0} {
-        }
-
-        uint32_t get_count() const {
-            return static_cast<uint32_t>(indices_.size());
-        }
-
-        size_t get_data_size() const {
-            return sizeof(indices_[0]) * indices_.size();
-        }
-
-        void const *get_data_ptr() const {
-            return indices_.data();
-        }
-    };
-
-    class PipelineHandler : public PipelineProvider {
-        VertexProvider vertex_provider_;
-        IndexProvider index_provider_;
+    class PipelineHandler {
+        PlainMesh mesh_;
+        Matrix matrix_;
         shared_ptr_of<VkDevice> device_;
         unique_ptr_of<VkShaderModule> vertex_shader_module_;
         unique_ptr_of<VkShaderModule> fragment_shader_module_;
         unique_ptr_of<VkPipelineLayout> pipeline_layout_;
         unique_ptr_of<VkPipeline> pipeline_;
-        std::vector<MemoryBuffer> memory_buffers_;
         PipelineBuilder builder_;
         std::vector<VkPipelineShaderStageCreateInfo> shader_stages_;
         VkViewport viewport_{
@@ -88,10 +43,12 @@ namespace {
                         uint32_t transfer_qfm,
                         std::string_view vertex_shader,
                         std::string_view fragment_shader)
-            : device_{device}
+            : mesh_{device, phys_device, transfer_qfm}
+            , matrix_{device, phys_device}
+            , device_{device}
             , vertex_shader_module_{GraphicsManager::make_shader_module(device, vertex_shader)}
             , fragment_shader_module_{GraphicsManager::make_shader_module(device, fragment_shader)}
-            , pipeline_layout_{GraphicsManager::make_pipeline_layout(device, {}, {})}
+            , pipeline_layout_{GraphicsManager::make_pipeline_layout(device, {matrix_.get_layout()}, {})}
             , shader_stages_(2) {
             shader_stages_[0] = GraphicsManager::make_shader_stage(vertex_shader_module_.get(), VK_SHADER_STAGE_VERTEX_BIT);
             shader_stages_[1] = GraphicsManager::make_shader_stage(fragment_shader_module_.get(), VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -118,78 +75,47 @@ namespace {
                 .vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions_.size()),
                 .pVertexAttributeDescriptions = attribute_descriptions_.data(),
             });
-
-            memory_buffers_ =
-                MemoryBuffer::make_buffers(device,
-                                           phys_device,
-                                           {
-                                               MemoryBuffer::Config{
-                                                   .size = vertex_provider_.get_data_size(),
-                                                   .usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                                               },
-                                               MemoryBuffer::Config{
-                                                   .size = index_provider_.get_data_size(),
-                                                   .usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                                               },
-                                           },
-                                           VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-            auto staging_buffers = MemoryBuffer::make_buffers(device,
-                                                              phys_device,
-                                                              {
-                                                                  MemoryBuffer::Config{
-                                                                      .size = vertex_provider_.get_data_size(),
-                                                                      .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                                                  },
-                                                                  MemoryBuffer::Config{
-                                                                      .size = index_provider_.get_data_size(),
-                                                                      .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                                                  },
-                                                              },
-                                                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-            staging_buffers[0].fill(vertex_provider_.get_data_ptr(), vertex_provider_.get_data_size());
-            staging_buffers[1].fill(index_provider_.get_data_ptr(), index_provider_.get_data_size());
-            BufferManager{device, transfer_qfm}.copy_buffers(staging_buffers.data(), memory_buffers_.data(), staging_buffers.size());
         }
 
-        void update_pipeline(rendering_info const &info) {
-            viewport_.width = static_cast<float>(info.extent.width);
-            viewport_.height = static_cast<float>(info.extent.height);
-            scissor_.extent = info.extent;
+        void update_pipeline(GraphicsRenderer::Context const &info) {
+            matrix_.setup_buffers(info.images_count, info.surface_extent);
+            viewport_.width = static_cast<float>(info.surface_extent.width);
+            viewport_.height = static_cast<float>(info.surface_extent.height);
+            scissor_.extent = info.surface_extent;
             builder_.set_render_pass(info.render_pass);
             pipeline_ = builder_.make_pipeline(device_);
         }
 
-        void update_command_buffer(VkCommandBuffer command_buffer) override {
-            std::array<VkBuffer, 1> buffers{memory_buffers_[0].get_buffer()};
-            std::array<VkDeviceSize, 1> offsets{0};
+        void update_command_buffer(VkCommandBuffer command_buffer, size_t index) {
             vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_.get());
-            vkCmdBindVertexBuffers(command_buffer, 0, static_cast<uint32_t>(buffers.size()), buffers.data(), offsets.data());
-            vkCmdBindIndexBuffer(command_buffer, memory_buffers_.back().get_buffer(), 0, VK_INDEX_TYPE_UINT16);
-            vkCmdDrawIndexed(command_buffer, index_provider_.get_count(), 1, 0, 0, 0);
+            matrix_.setup_command_buffer(pipeline_layout_.get(), command_buffer, index);
+            mesh_.draw(command_buffer);
         }
 
-        void set_update_rendering(std::function<void()> const &callback) {
-            // nothing to do
+        void update_frame(size_t index) {
+            matrix_.update_content(index);
         }
     };
 
 } // namespace
 
 int main() {
+    using namespace std::placeholders;
     try {
         GraphicsRenderer renderer{WindowConfig{
-            .title = "Triangle loaded from memory",
+            .title = "Load mesh from memory",
             .width = 600,
             .height = 500,
         }};
         auto const &device_ctx = renderer.get_device_context();
-        auto provider = std::make_shared<PipelineHandler>(device_ctx.get_device(),
-                                                          device_ctx.get_physical_device(),
-                                                          device_ctx.get_transfer_qfm(),
-                                                          "shader.vert.spv",
-                                                          "shader.frag.spv");
-        renderer.set_pipeline_provider(provider);
-        renderer.set_rendering_changed_callback([provider](rendering_info const &info) { provider->update_pipeline(info); });
+        PipelineHandler handler(device_ctx.get_device(),
+                                device_ctx.get_physical_device(),
+                                device_ctx.get_transfer_qfm(),
+                                "shader.vert.spv",
+                                "shader.frag.spv");
+        renderer.set_context_changed_callback(std::bind(&PipelineHandler::update_pipeline, &handler, _1));
+        renderer.set_update_command_callback(std::bind(&PipelineHandler::update_command_buffer, &handler, _1, _2));
+        renderer.set_update_frame_callback(std::bind(&PipelineHandler::update_frame, &handler, _1));
         renderer.run();
     } catch (const std::exception &ex) {
         LoggerProvider::println(ex.what());

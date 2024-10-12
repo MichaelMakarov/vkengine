@@ -3,8 +3,7 @@ add_library(
     vertex.cpp
 )
 target_include_directories(
-    engine_geometry PRIVATE 
-    ${CMAKE_CURRENT_SOURCE_DIR}
+    engine_geometry PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 )
 target_link_libraries(
     engine_geometry PUBLIC 

@@ -1,7 +1,7 @@
 #include "swapchain_context.hpp"
 
-#include "graphics_manager.hpp"
 #include "graphics_error.hpp"
+#include "graphics_manager.hpp"
 
 namespace {
 
@@ -15,7 +15,7 @@ namespace {
 
 } // namespace
 
-SwapchainContext::SwapchainContext(shared_ptr_of<VkDevice> device, config const &info)
+SwapchainContext::SwapchainContext(shared_ptr_of<VkDevice> device, Config const &info)
     : device_{device}
     , command_pool_{GraphicsManager::make_command_pool(device, VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT, info.graphics_qfm)}
     , qfm_indices_{make_queue_family_indices(info)}
@@ -44,9 +44,7 @@ SwapchainContext::SwapchainContext(shared_ptr_of<VkDevice> device, config const 
 SwapchainContext::~SwapchainContext() = default;
 
 ImageContext const &SwapchainContext::get_image() {
-    ImageContext const &image_ctx = image_contexts_[image_index_];
-    image_index_ = (image_index_ + 1) % image_contexts_.size();
-    return image_ctx;
+    return image_contexts_[index_sequence_.get_index()];
 }
 
 void SwapchainContext::update_extent(VkExtent2D extent) {
@@ -56,28 +54,38 @@ void SwapchainContext::update_extent(VkExtent2D extent) {
     render_pass_ = GraphicsManager::make_render_pass(device_, swapchain_info_.imageFormat);
 
     auto images = get_swapchain_images(device_.get(), swapchain_.get());
+    size_t prev_size = image_contexts_.size();
     image_contexts_.resize(images.size());
-    ImageContext::context_info info;
-    info.extent = extent;
-    info.format = swapchain_info_.imageFormat;
-    info.render_pass = render_pass_.get();
-    for (std::size_t i{}; i < images.size(); ++i) {
-        info.image = images[i];
-        image_contexts_[i] = ImageContext(device_, info, command_pool_);
+    // fill new images
+    for (size_t i = 0; i < image_contexts_.size(); ++i) {
+        ImageContext &image_context = image_contexts_[i];
+        image_context.set_image_view(GraphicsManager::make_image_view(device_, images[i], swapchain_info_.imageFormat));
+        image_context.set_framebuffer(GraphicsManager::make_framebuffer(device_,
+                                                                        image_context.get_image_view(),
+                                                                        render_pass_.get(),
+                                                                        swapchain_info_.imageFormat,
+                                                                        extent));
     }
-    image_index_ = 0;
+    // fill only for new count of images
+    for (size_t i = prev_size; i < image_contexts_.size(); ++i) {
+        ImageContext &image_context = image_contexts_[i];
+        image_context.set_command_buffer(GraphicsManager::make_command_buffer(device_, command_pool_));
+        image_context.set_submit_semaphore(GraphicsManager::make_semaphore(device_));
+        image_context.set_present_semaphore(GraphicsManager::make_semaphore(device_));
+    }
+    index_sequence_ = IndexSequence(image_contexts_.size());
 }
 
 std::vector<ImageRenderer> SwapchainContext::get_image_renderers() const {
     std::vector<ImageRenderer> image_renderers;
     image_renderers.reserve(image_contexts_.size());
     for (auto const &image : image_contexts_) {
-        image_renderers.emplace_back(&image, render_pass_.get(), swapchain_info_.imageExtent);
+        image_renderers.emplace_back(image.get_command_buffer(), image.get_framebuffer(), render_pass_.get(), swapchain_info_.imageExtent);
     }
     return image_renderers;
 }
 
-std::vector<uint32_t> SwapchainContext::make_queue_family_indices(config const &info) {
+std::vector<uint32_t> SwapchainContext::make_queue_family_indices(Config const &info) {
     std::vector<uint32_t> qfm_indices;
     qfm_indices.reserve(2);
     qfm_indices.push_back(info.graphics_qfm);

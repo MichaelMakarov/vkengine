@@ -5,82 +5,24 @@
 
 #include <array>
 
-class Vertex2d {
-    glm::vec2 point_;
-    glm::vec3 color_;
-
-  public:
-    Vertex2d(glm::vec2 const &point, glm::vec3 const &color)
-        : point_{point}
-        , color_{color} {
-    }
-
-    Vertex2d()
-        : Vertex2d(glm::vec2(0.f, 0.f), glm::vec3(1.f, 1.f, 1.f)) {
-    }
-
-    glm::vec2 const &get_point() const {
-        return point_;
-    }
-
-    void set_point(glm::vec2 const &point) {
-        point_ = point;
-    }
-
-    glm::vec3 const &get_color() const {
-        return color_;
-    }
-
-    void set_color(glm::vec3 const &color) {
-        color_ = color;
-    }
+struct Vertex2d {
+    glm::vec2 point;
+    glm::vec3 color;
 
     static VkVertexInputBindingDescription get_binding_description(uint32_t binding);
 
     static std::array<VkVertexInputAttributeDescription, 2> get_attribute_description(uint32_t binding);
 };
 
-class Vertex3d {
-    glm::vec3 point_;
-    glm::vec3 normal_;
-    glm::vec3 color_;
-
-  public:
-    Vertex3d(glm::vec3 const &point, glm::vec3 normal, glm::vec3 color)
-        : point_{point}
-        , normal_{normal}
-        , color_{color} {
-    }
-
-    Vertex3d()
-        : Vertex3d(glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, 0.f, 0.f), glm::vec3(1.f, 1.f, 1.f)) {
-    }
-
-    glm::vec3 const &get_point() const {
-        return point_;
-    }
-
-    void set_point(glm::vec3 const &point) {
-        point_ = point;
-    }
-
-    glm::vec3 const &get_normal() const {
-        return normal_;
-    }
-
-    void set_normal(glm::vec3 const &normal) {
-        normal_ = normal;
-    }
-
-    glm::vec3 const &get_color() const {
-        return color_;
-    }
-
-    void set_color(glm::vec3 const &color) {
-        color_ = color;
-    }
+struct Vertex3d {
+    glm::vec3 point;
+    glm::vec3 normal;
+    glm::vec3 color;
+    struct {
+        uint8_t u, v;
+    } texture;
 
     static VkVertexInputBindingDescription get_binding_description(uint32_t binding);
 
-    static std::array<VkVertexInputAttributeDescription, 3> get_attribute_description(uint32_t binding);
+    static std::array<VkVertexInputAttributeDescription, 4> get_attribute_description(uint32_t binding);
 };

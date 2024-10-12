@@ -3,15 +3,6 @@
 #include "graphics_types.hpp"
 
 class ImageContext {
-  public:
-    struct context_info {
-        VkImage image;
-        VkFormat format;
-        VkExtent2D extent;
-        VkRenderPass render_pass;
-    };
-
-  private:
     unique_ptr_of<VkImageView> image_view_;
     unique_ptr_of<VkFramebuffer> framebuffer_;
     unique_ptr_of<VkSemaphore> submit_semaphore_;
@@ -19,27 +10,43 @@ class ImageContext {
     unique_ptr_of<VkCommandBuffer> command_buffer_;
 
   public:
-    ImageContext() = default;
-
-    ImageContext(shared_ptr_of<VkDevice> device, context_info const &info, shared_ptr_of<VkCommandPool> cmd_pool);
-
     VkImageView get_image_view() const {
         return image_view_.get();
+    }
+    
+    void set_image_view(unique_ptr_of<VkImageView> image_view) {
+        image_view_.swap(image_view);
     }
 
     VkFramebuffer get_framebuffer() const {
         return framebuffer_.get();
     }
 
+    void set_framebuffer(unique_ptr_of<VkFramebuffer> framebuffer) {
+        framebuffer_.swap(framebuffer);
+    }
+
     VkSemaphore get_submit_semaphore() const {
         return submit_semaphore_.get();
+    }
+
+    void set_submit_semaphore(unique_ptr_of<VkSemaphore> semaphore) {
+        submit_semaphore_.swap(semaphore);
     }
 
     VkSemaphore get_present_semaphore() const {
         return present_semaphore_.get();
     }
 
+    void set_present_semaphore(unique_ptr_of<VkSemaphore> semaphore) {
+        present_semaphore_.swap(semaphore);
+    }
+
     VkCommandBuffer get_command_buffer() const {
         return command_buffer_.get();
+    }
+
+    void set_command_buffer(unique_ptr_of<VkCommandBuffer> command_buffer) {
+        command_buffer_.swap(command_buffer);
     }
 };
