@@ -10,7 +10,7 @@ endfunction()
 
 function(copy_images)
     file(GLOB image_files ${CMAKE_CURRENT_SOURCE_DIR}/images/*)
-    set(output_dir ${CMAKE_CURRENT_BINARY_DIR}/${image})
+    set(output_dir ${CMAKE_CURRENT_BINARY_DIR})
     if (EXISTS ${output_dir}/Debug)
         set(output_dir ${output_dir}/Debug)
     elseif (EXISTS ${output_dir}/debug)
