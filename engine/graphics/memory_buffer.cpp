@@ -3,83 +3,44 @@
 #include "graphics_error.hpp"
 #include "graphics_manager.hpp"
 
-#include <unordered_map>
-
-namespace {
-
-    uint32_t get_memory_type_index(VkPhysicalDevice device, uint32_t type, VkMemoryPropertyFlags properties) {
-        VkPhysicalDeviceMemoryProperties memory_properties;
-        vkGetPhysicalDeviceMemoryProperties(device, &memory_properties);
-        for (uint32_t i = 0; i < memory_properties.memoryTypeCount; ++i) {
-            if ((type & (1 << i)) && (memory_properties.memoryTypes[i].propertyFlags & properties) == properties) {
-                return i;
-            }
-        }
-        raise_error("Failed to find suitable memory: type={}, properties={}.", type, properties);
-    }
-
-    constexpr VkDeviceSize align_memory_size(VkDeviceSize size, VkDeviceSize align) {
-        return (size + align - 1) & (~(align - 1));
-    }
-
-    struct MemoryInfo {
-        VkDeviceSize size;
-        shared_ptr_of<VkDeviceMemory> memory;
-
-        friend bool operator<(MemoryInfo const &left, MemoryInfo const &right) {
-            return left.size < right.size;
-        }
-    };
-
-} // namespace
-
-MemoryBuffer::MemoryBuffer(shared_ptr_of<VkDevice> device, Config info)
-    : device_{device}
-    , buffer_{GraphicsManager::make_buffer(device, info.size, info.usage, info.mode)} {
-    vkGetBufferMemoryRequirements(device.get(), buffer_.get(), &requirements_);
+MemoryBuffer::MemoryBuffer(shared_ptr_of<VkDevice> device,
+                           std::shared_ptr<AllocatorInterface> allocator,
+                           VkMemoryAllocateFlags flags,
+                           VkDeviceSize size,
+                           VkBufferUsageFlags usage,
+                           VkSharingMode mode)
+    : device_{device.get()}
+    , buffer_{GraphicsManager::make_buffer(device, size, usage, mode)}
+    , allocator_{allocator} {
+    VkMemoryRequirements requirements;
+    vkGetBufferMemoryRequirements(device_, buffer_.get(), &requirements);
+    block_ = allocator_->allocate(requirements, flags);
+    alignment_ = requirements.alignment;
+    VkDeviceMemory memory = block_.get_memory().get();
+    VkDeviceSize offset = block_.get_offset(alignment_);
+    vk_assert(vkBindBufferMemory(device_, buffer_.get(), memory, offset),
+              "Failed to bind buffer={} to memory={} with offset={}.",
+              reinterpret_cast<uintptr_t>(buffer_.get()),
+              reinterpret_cast<uintptr_t>(memory),
+              offset);
 }
 
-void MemoryBuffer::bind(shared_ptr_of<VkDeviceMemory> memory) {
-    memory_.swap(memory);
-    vk_assert(vkBindBufferMemory(device_.get(), buffer_.get(), memory_.get(), offset_), "Failed to bind buffer to memory.");
-}
-
-MemoryBuffer::MemoryBuffer(shared_ptr_of<VkDevice> device, VkPhysicalDevice phys_device, Config info, VkMemoryPropertyFlags properties)
-    : MemoryBuffer(device, info) {
-    offset_ = 0;
-    uint32_t type_index = get_memory_type_index(phys_device, requirements_.memoryTypeBits, properties);
-    bind(GraphicsManager::make_device_memory(device, requirements_.size, type_index));
-}
-
-std::vector<MemoryBuffer> MemoryBuffer::make_buffers(shared_ptr_of<VkDevice> device,
-                                                     VkPhysicalDevice phys_device,
-                                                     std::vector<Config> const &configs,
-                                                     VkMemoryPropertyFlags properties) {
-    std::vector<MemoryBuffer> buffers;
-    buffers.reserve(configs.size());
-    std::unordered_map<uint32_t, MemoryInfo> memory_map;
-    for (Config const &config : configs) {
-        auto &buffer = buffers.emplace_back(MemoryBuffer(device, config));
-        MemoryInfo &info = memory_map[buffer.requirements_.memoryTypeBits];
-        buffer.offset_ = align_memory_size(info.size, buffer.requirements_.alignment);
-        info.size = buffer.offset_ + buffer.requirements_.size;
+MemoryBuffer::~MemoryBuffer() {
+    if (allocator_) {
+        allocator_->deallocate(block_);
     }
-    for (auto &[type, info] : memory_map) {
-        uint32_t type_index = get_memory_type_index(phys_device, type, properties);
-        info.memory = GraphicsManager::make_device_memory(device, info.size, type_index);
-    }
-    for (auto &buffer : buffers) {
-        buffer.bind(memory_map[buffer.requirements_.memoryTypeBits].memory);
-    }
-    return buffers;
 }
 
 void MemoryBuffer::fill(void const *data, size_t size) {
+    VkDeviceMemory memory = block_.get_memory().get();
+    VkDeviceSize offset = block_.get_offset(alignment_);
+    VkDeviceSize bufsize = block_.get_size(alignment_);
     void *ptr;
-    vk_assert(vkMapMemory(device_.get(), memory_.get(), offset_, requirements_.size, 0, &ptr),
-              "Failed to map memory: offset={}, size={}.",
-              offset_,
-              requirements_.size);
+    vk_assert(vkMapMemory(device_, memory, offset, bufsize, 0, &ptr),
+              "Failed to map memory={}: offset={}, size={}.",
+              reinterpret_cast<uintptr_t>(memory),
+              offset,
+              bufsize);
     std::memcpy(ptr, data, size);
-    vkUnmapMemory(device_.get(), memory_.get());
+    vkUnmapMemory(device_, memory);
 }

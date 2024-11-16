@@ -36,7 +36,7 @@ class GraphicsManager {
 
     static unique_ptr_of<VkImageView> make_image_view(shared_ptr_of<VkDevice> device, VkImage image, VkFormat format);
 
-    static unique_ptr_of<VkDeviceMemory> make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index);
+    static shared_ptr_of<VkDeviceMemory> make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index);
 
     static unique_ptr_of<VkFence> make_fence(shared_ptr_of<VkDevice> device);
 
@@ -46,18 +46,18 @@ class GraphicsManager {
                                                                 std::vector<VkDescriptorSetLayout> const &set_layouts,
                                                                 std::vector<VkPushConstantRange> const &push_constant_ranges);
 
-    static unique_ptr_of<VkShaderModule> make_shader_module(shared_ptr_of<VkDevice> device, std::string_view filename);
-
-    static VkPipelineShaderStageCreateInfo make_shader_stage(VkShaderModule shader_module, VkShaderStageFlagBits stage);
-
     static unique_ptr_of<VkPipeline> make_pipeline(shared_ptr_of<VkDevice> device, VkGraphicsPipelineCreateInfo const &pipeline_info);
 
     static unique_ptr_of<VkDescriptorSetLayout> make_descriptor_set_layout(shared_ptr_of<VkDevice> device,
                                                                            std::vector<VkDescriptorSetLayoutBinding> const &bindings);
 
-    static unique_ptr_of<VkDescriptorPool> make_descriptor_pool(shared_ptr_of<VkDevice> device,
-                                                                std::vector<VkDescriptorPoolSize> const &pool_sizes);
+    static unique_ptr_of<VkDescriptorPool>
+    make_descriptor_pool(shared_ptr_of<VkDevice> device, uint32_t max_sets_count, std::vector<VkDescriptorPoolSize> const &pool_sizes);
 
     static std::vector<VkDescriptorSet>
     allocate_descriptor_sets(shared_ptr_of<VkDevice> device, VkDescriptorPool pool, std::vector<VkDescriptorSetLayout> const &layouts);
+
+    static unique_ptr_of<VkImage> make_image(shared_ptr_of<VkDevice> device, VkImageCreateInfo const &info);
+
+    static unique_ptr_of<VkSampler> make_sampler(shared_ptr_of<VkDevice> device, float anisotropy = 1.0f);
 };

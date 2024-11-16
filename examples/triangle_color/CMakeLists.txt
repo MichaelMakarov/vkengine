@@ -1,6 +1,8 @@
 add_executable(
     triangle_color
     src/main.cpp
+    src/pipeline_provider.cpp
+    src/triangle_pipeline.cpp
 )
 target_link_libraries(
     triangle_color PRIVATE engine

@@ -8,5 +8,5 @@ target_include_directories(
 target_link_libraries(
     engine_geometry PUBLIC 
     glm::glm
-    Vulkan::Vulkan
+    engine_graphics
 )

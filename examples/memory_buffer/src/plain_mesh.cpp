@@ -1,6 +1,6 @@
 #include "plain_mesh.hpp"
 
-#include "graphics/buffer_manager.hpp"
+#include "graphics/buffer_copy_command.hpp"
 
 namespace {
 
@@ -11,50 +11,70 @@ namespace {
 
 } // namespace
 
-PlainMesh::PlainMesh(shared_ptr_of<VkDevice> device, VkPhysicalDevice phys_device, uint32_t transfer_qfm) {
+PlainMesh::PlainMesh(shared_ptr_of<VkDevice> device, std::shared_ptr<AllocatorInterface> allocator, Commander &transfer) {
     vertices_ = {
-        Vertex2d{.point = glm::vec2(-0.5f, 0.5f), .color = glm::vec3(1.0f, 0.0f, 0.0f)},
-        Vertex2d{.point = glm::vec2(0.5f, 0.5f), .color = glm::vec3(0.0f, 1.0f, 0.0f)},
-        Vertex2d{.point = glm::vec2(0.5f, -0.5f), .color = glm::vec3(0.0f, 0.0f, 1.0f)},
-        Vertex2d{.point = glm::vec2(-0.5f, -0.5f), .color = glm::vec3(1.0f, 1.0f, 1.0f)},
+        Vertex2d{
+            .point = glm::vec2(-0.5f, 0.5f),
+            .color = glm::vec3(1.0f, 0.0f, 0.0f),
+            .texture = glm::vec2(1.0f, 0.0f),
+        },
+        Vertex2d{
+            .point = glm::vec2(0.5f, 0.5f),
+            .color = glm::vec3(0.0f, 1.0f, 0.0f),
+            .texture = glm::vec2(0.0f, 0.0f),
+        },
+        Vertex2d{
+            .point = glm::vec2(0.5f, -0.5f),
+            .color = glm::vec3(0.0f, 0.0f, 1.0f),
+            .texture = glm::vec2(0.0f, 1.0f),
+        },
+        Vertex2d{
+            .point = glm::vec2(-0.5f, -0.5f),
+            .color = glm::vec3(1.0f, 1.0f, 1.0f),
+            .texture = glm::vec2(1.0f, 1.0f),
+        },
     };
     indices_ = {0, 2, 1, 2, 0, 3};
-    buffers_ = MemoryBuffer::make_buffers(device,
-                                          phys_device,
-                                          {
-                                              MemoryBuffer::Config{
-                                                  .size = get_data_size(vertices_),
-                                                  .usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                                              },
-                                              MemoryBuffer::Config{
-                                                  .size = get_data_size(indices_),
-                                                  .usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                                              },
-                                          },
-                                          VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    auto staging_buffers = MemoryBuffer::make_buffers(device,
-                                                      phys_device,
-                                                      {
-                                                          MemoryBuffer::Config{
-                                                              .size = get_data_size(vertices_),
-                                                              .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                                          },
-                                                          MemoryBuffer::Config{
-                                                              .size = get_data_size(indices_),
-                                                              .usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                                                          },
-                                                      },
-                                                      VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    staging_buffers[0].fill(vertices_.data(), get_data_size(vertices_));
-    staging_buffers[1].fill(indices_.data(), get_data_size(indices_));
-    BufferManager(device, transfer_qfm).copy_buffers(staging_buffers.data(), buffers_.data(), buffers_.size());
+    vertex_buffer_ = MemoryBuffer(device,
+                                  allocator,
+                                  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                  get_data_size(vertices_),
+                                  VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+    index_buffer_ = MemoryBuffer(device,
+                                 allocator,
+                                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                                 get_data_size(indices_),
+                                 VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+    MemoryBuffer vertex_buffer(device,
+                               allocator,
+                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                               get_data_size(vertices_),
+                               VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+    MemoryBuffer index_buffer(device,
+                              allocator,
+                              VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                              get_data_size(indices_),
+                              VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+    vertex_buffer.fill(vertices_.data(), get_data_size(vertices_));
+    index_buffer.fill(indices_.data(), get_data_size(indices_));
+    transfer.add_command(std::make_unique<BufferCopyCommand>(vertex_buffer.get_buffer(), vertex_buffer_.get_buffer(), vertex_buffer.get_size()));
+    transfer.add_command(std::make_unique<BufferCopyCommand>(index_buffer.get_buffer(), index_buffer_.get_buffer(), index_buffer.get_size()));
+    transfer.execute();
 }
 
-void PlainMesh::draw(VkCommandBuffer command_buffer) {
-    VkBuffer vertex_buffer = buffers_[0].get_buffer();
+void PlainMesh::draw(VkCommandBuffer command_buffer) const {
+    VkBuffer vertex_buffer = vertex_buffer_.get_buffer();
     VkDeviceSize offset = 0;
-    VkBuffer index_buffer = buffers_[1].get_buffer();
     vkCmdBindVertexBuffers(command_buffer, 0, 1, &vertex_buffer, &offset);
-    vkCmdBindIndexBuffer(command_buffer, index_buffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindIndexBuffer(command_buffer, index_buffer_.get_buffer(), 0, VK_INDEX_TYPE_UINT16);
     vkCmdDrawIndexed(command_buffer, static_cast<uint32_t>(indices_.size()), 1, 0, 0, 0);
+}
+
+VkVertexInputBindingDescription PlainMesh::get_vertex_binding_description() const {
+    return Vertex2d::get_binding_description(0);
+}
+
+std::vector<VkVertexInputAttributeDescription> PlainMesh::get_vertex_attribute_descriptions() const {
+    auto vertex_attributes = Vertex2d::get_attribute_description(0);
+    return std::vector<VkVertexInputAttributeDescription>(vertex_attributes.begin(), vertex_attributes.end());
 }

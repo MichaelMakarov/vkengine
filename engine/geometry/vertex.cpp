@@ -8,7 +8,7 @@ VkVertexInputBindingDescription Vertex2d::get_binding_description(uint32_t bindi
     };
 }
 
-std::array<VkVertexInputAttributeDescription, 2> Vertex2d::get_attribute_description(uint32_t binding) {
+std::array<VkVertexInputAttributeDescription, 3> Vertex2d::get_attribute_description(uint32_t binding) {
     return {
         VkVertexInputAttributeDescription{
             .location = 0,
@@ -21,6 +21,12 @@ std::array<VkVertexInputAttributeDescription, 2> Vertex2d::get_attribute_descrip
             .binding = binding,
             .format = VK_FORMAT_R32G32B32_SFLOAT,
             .offset = offsetof(Vertex2d, color),
+        },
+        VkVertexInputAttributeDescription{
+            .location = 2,
+            .binding = binding,
+            .format = VK_FORMAT_R32G32_SFLOAT,
+            .offset = offsetof(Vertex2d, texture),
         },
     };
 }
@@ -56,7 +62,7 @@ std::array<VkVertexInputAttributeDescription, 4> Vertex3d::get_attribute_descrip
         VkVertexInputAttributeDescription{
             .location = 3,
             .binding = binding,
-            .format = VK_FORMAT_R8G8_UNORM,
+            .format = VK_FORMAT_R32G32_SFLOAT,
             .offset = offsetof(Vertex3d, texture),
         },
     };

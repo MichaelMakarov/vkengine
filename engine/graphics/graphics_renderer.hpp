@@ -13,10 +13,10 @@ class GraphicsRenderer {
             .format = VK_FORMAT_B8G8R8A8_UNORM,
             .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
         };
-        VkPresentModeKHR desired_present_mode{VK_PRESENT_MODE_MAILBOX_KHR};
-        VkPresentModeKHR default_present_mode{VK_PRESENT_MODE_FIFO_KHR};
-        VkImageUsageFlags image_usage{VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT};
-        VkCompositeAlphaFlagBitsKHR composite_alpha{VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR};
+        VkPresentModeKHR desired_present_mode = VK_PRESENT_MODE_MAILBOX_KHR;
+        VkPresentModeKHR default_present_mode = VK_PRESENT_MODE_FIFO_KHR;
+        VkImageUsageFlags image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        VkCompositeAlphaFlagBitsKHR composite_alpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     };
 
     struct Context {

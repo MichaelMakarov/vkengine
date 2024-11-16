@@ -39,21 +39,9 @@ namespace {
                                                   const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
                                                   void * /*user_data*/) {
         if (msg_severity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-            debug_println("VK debug messenger: {}", callback_data->pMessage);
+            info_println("VK debug messenger: {}", callback_data->pMessage);
         }
         return VK_FALSE;
-    }
-
-    std::vector<uint8_t> read_shader(shared_ptr_of<VkDevice> device, std::string_view filename) {
-        std::ifstream fin{filename.data(), std::ios::ate | std::ios::binary};
-        if (!fin.is_open()) {
-            raise_error("Failed to open shader file {}", filename);
-        }
-        std::vector<uint8_t> buffer(static_cast<size_t>(fin.tellg()));
-        fin.seekg(0);
-        fin.read(reinterpret_cast<char *>(buffer.data()), buffer.size());
-        fin.close();
-        return buffer;
     }
 
 } // namespace
@@ -127,7 +115,8 @@ unique_ptr_of<VkSurfaceKHR> GraphicsManager::make_surface(shared_ptr_of<VkInstan
 shared_ptr_of<VkDevice> GraphicsManager::make_device(VkPhysicalDevice phys_device,
                                                      std::vector<VkDeviceQueueCreateInfo> const &queue_infos,
                                                      std::vector<char const *> const &extension_names) {
-    VkPhysicalDeviceFeatures features{};
+    VkPhysicalDeviceFeatures features;
+    vkGetPhysicalDeviceFeatures(phys_device, &features);
     VkDeviceCreateInfo info{
         .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
         .queueCreateInfoCount = static_cast<uint32_t>(queue_infos.size()),
@@ -300,7 +289,7 @@ unique_ptr_of<VkImageView> GraphicsManager::make_image_view(shared_ptr_of<VkDevi
     });
 }
 
-unique_ptr_of<VkDeviceMemory> GraphicsManager::make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index) {
+shared_ptr_of<VkDeviceMemory> GraphicsManager::make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index) {
     VkMemoryAllocateInfo info{
         .sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
         .allocationSize = size,
@@ -308,7 +297,7 @@ unique_ptr_of<VkDeviceMemory> GraphicsManager::make_device_memory(shared_ptr_of<
     };
     VkDeviceMemory memory;
     vk_assert(vkAllocateMemory(device.get(), &info, nullptr, &memory), "Failed to allocate a device memory.");
-    return unique_ptr_of<VkDeviceMemory>(memory, [device](VkDeviceMemory device_memory) {
+    return shared_ptr_of<VkDeviceMemory>(memory, [device](VkDeviceMemory device_memory) {
         debug_println("delete device memory");
         vkFreeMemory(device.get(), device_memory, nullptr);
     });
@@ -357,30 +346,6 @@ unique_ptr_of<VkPipelineLayout> GraphicsManager::make_pipeline_layout(shared_ptr
     });
 }
 
-unique_ptr_of<VkShaderModule> GraphicsManager::make_shader_module(shared_ptr_of<VkDevice> device, std::string_view filename) {
-    auto buffer = read_shader(device, filename);
-    VkShaderModuleCreateInfo info{
-        .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
-        .codeSize = buffer.size(),
-        .pCode = reinterpret_cast<uint32_t const *>(buffer.data()),
-    };
-    VkShaderModule shader_module;
-    vk_assert(vkCreateShaderModule(device.get(), &info, nullptr, &shader_module), "Failed to create a shader module.");
-    return unique_ptr_of<VkShaderModule>(shader_module, [device](VkShaderModule shader_module) {
-        debug_println("delete shader module");
-        vkDestroyShaderModule(device.get(), shader_module, nullptr);
-    });
-}
-
-VkPipelineShaderStageCreateInfo GraphicsManager::make_shader_stage(VkShaderModule shader_module, VkShaderStageFlagBits stage) {
-    return VkPipelineShaderStageCreateInfo{
-        .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
-        .stage = stage,
-        .module = shader_module,
-        .pName = "main",
-    };
-}
-
 unique_ptr_of<VkPipeline> GraphicsManager::make_pipeline(shared_ptr_of<VkDevice> device,
                                                          VkGraphicsPipelineCreateInfo const &pipeline_info) {
     VkPipeline pipeline;
@@ -407,14 +372,11 @@ GraphicsManager::make_descriptor_set_layout(shared_ptr_of<VkDevice> device, std:
 }
 
 unique_ptr_of<VkDescriptorPool> GraphicsManager::make_descriptor_pool(shared_ptr_of<VkDevice> device,
+                                                                      uint32_t max_sets_count,
                                                                       std::vector<VkDescriptorPoolSize> const &pool_sizes) {
-    uint32_t total_count = 0;
-    for (auto const &pool_size : pool_sizes) {
-        total_count += pool_size.descriptorCount;
-    }
     VkDescriptorPoolCreateInfo info{
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-        .maxSets = total_count,
+        .maxSets = max_sets_count,
         .poolSizeCount = static_cast<uint32_t>(pool_sizes.size()),
         .pPoolSizes = pool_sizes.data(),
     };
@@ -438,4 +400,40 @@ std::vector<VkDescriptorSet> GraphicsManager::allocate_descriptor_sets(shared_pt
     std::vector<VkDescriptorSet> descriptor_sets(layouts.size());
     vk_assert(vkAllocateDescriptorSets(device.get(), &info, descriptor_sets.data()), "Failed to allocate descriptor sets.");
     return descriptor_sets;
+}
+
+unique_ptr_of<VkImage> GraphicsManager::make_image(shared_ptr_of<VkDevice> device, VkImageCreateInfo const &info) {
+    VkImage image;
+    vk_assert(vkCreateImage(device.get(), &info, nullptr, &image), "Failed to create image.");
+    return unique_ptr_of<VkImage>(image, [device](VkImage image) {
+        debug_println("delete image");
+        vkDestroyImage(device.get(), image, nullptr);
+    });
+}
+
+unique_ptr_of<VkSampler> GraphicsManager::make_sampler(shared_ptr_of<VkDevice> device, float anisotropy) {
+    VkSamplerCreateInfo info{
+        .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+        .magFilter = VK_FILTER_LINEAR,
+        .minFilter = VK_FILTER_LINEAR,
+        .mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR,
+        .addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT,
+        .mipLodBias = 0.0f,
+        .anisotropyEnable = static_cast<VkBool32>(anisotropy != 1.0f),
+        .maxAnisotropy = anisotropy,
+        .compareEnable = VK_FALSE,
+        .compareOp = VK_COMPARE_OP_ALWAYS,
+        .minLod = 0.0f,
+        .maxLod = 0.0f,
+        .borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK,
+        .unnormalizedCoordinates = VK_FALSE,
+    };
+    VkSampler sampler;
+    vk_assert(vkCreateSampler(device.get(), &info, nullptr, &sampler), "Failed to create sampler.");
+    return unique_ptr_of<VkSampler>(sampler, [device](VkSampler sampler) {
+        debug_println("delete sampler");
+        vkDestroySampler(device.get(), sampler, nullptr);
+    });
 }

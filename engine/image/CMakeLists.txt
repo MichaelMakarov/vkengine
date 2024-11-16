@@ -1,0 +1,3 @@
+add_library(engine_image STATIC image_wrapper.cpp)
+target_include_directories(engine_image PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(engine_image PUBLIC engine_utility)

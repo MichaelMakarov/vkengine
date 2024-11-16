@@ -1,7 +1,5 @@
 #pragma once
 
-#include "utility/debug.hpp"
-
 #include <vulkan/vulkan.h>
 
 #include <functional>

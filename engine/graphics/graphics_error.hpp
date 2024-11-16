@@ -3,7 +3,7 @@
 #include "graphics_types.hpp"
 
 #include "utility/error.hpp"
-#include "utility/logger_provider.hpp"
+#include "utility/log.hpp"
 
 #define vk_assert(res, msg, ...)                                                                                                           \
     if (res != VK_SUCCESS)                                                                                                                 \

@@ -3,6 +3,8 @@
 #include "graphics_manager.hpp"
 #include "window_context.hpp"
 
+#include "utility/debug.hpp"
+
 namespace {
 
     std::vector<char const *> get_glfw_extensions() {
