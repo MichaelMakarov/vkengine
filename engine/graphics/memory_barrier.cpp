@@ -1,6 +1,6 @@
 #include "memory_barrier.hpp"
 
-VkImageMemoryBarrier MemoryBarrier::make_image_barrier(VkImage image, ImageInfo const &src_info, ImageInfo const &dst_info) {
+VkImageMemoryBarrier MemoryBarrier::make_image_barrier(VkImage image, VkImageAspectFlags aspect, ImageInfo const &src_info, ImageInfo const &dst_info) {
     return VkImageMemoryBarrier{
         .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
         .srcAccessMask = src_info.access_mask,
@@ -12,7 +12,7 @@ VkImageMemoryBarrier MemoryBarrier::make_image_barrier(VkImage image, ImageInfo 
         .image = image,
         .subresourceRange =
             VkImageSubresourceRange{
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .aspectMask = aspect,
                 .baseMipLevel = 0,
                 .levelCount = 1,
                 .baseArrayLayer = 0,

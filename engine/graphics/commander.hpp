@@ -16,6 +16,8 @@ class Commander {
   public:
     Commander(shared_ptr_of<VkDevice> device, uint32_t qfm_index, uint32_t queue_index);
 
+    Commander(shared_ptr_of<VkDevice> device, shared_ptr_of<VkCommandPool> command_pool, VkQueue queue);
+
     void add_command(std::unique_ptr<CommandInterface> command);
 
     void execute();

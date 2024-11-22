@@ -4,10 +4,10 @@
 #include "graphics/commander.hpp"
 #include "graphics/descriptor_interface.hpp"
 #include "graphics/graphics_types.hpp"
-#include "graphics/texture_image.hpp"
+#include "graphics/image_texture.hpp"
 
 class TextureDescriptor : public DescriptorInterface {
-    TextureImage texture_;
+    ImageTexture texture_;
     VkDescriptorImageInfo image_info_;
 
   public:

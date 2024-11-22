@@ -24,5 +24,9 @@ class MemoryBlock {
 
     VkDeviceSize get_size(VkDeviceSize alignment = 1) const;
 
+    explicit operator bool() const {
+        return static_cast<bool>(memory_);
+    }
+
     friend bool operator<(MemoryBlock const &left, MemoryBlock const &right);
 };

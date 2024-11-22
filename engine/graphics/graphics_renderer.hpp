@@ -1,5 +1,6 @@
 #pragma once
 
+#include "allocator_interface.hpp"
 #include "device_context.hpp"
 #include "instance_context.hpp"
 #include "swapchain_context.hpp"
@@ -17,6 +18,7 @@ class GraphicsRenderer {
         VkPresentModeKHR default_present_mode = VK_PRESENT_MODE_FIFO_KHR;
         VkImageUsageFlags image_usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
         VkCompositeAlphaFlagBitsKHR composite_alpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        bool depth_buffering = false;
     };
 
     struct Context {
@@ -28,16 +30,6 @@ class GraphicsRenderer {
     using context_changed_t = std::function<void(Context const &)>;
     using update_command_t = std::function<void(VkCommandBuffer, size_t)>;
 
-  private:
-    Config config_;
-    InstanceContext instance_context_;
-    DeviceContext device_context_;
-    SwapchainContext swapchain_context_;
-    SwapchainPresenter swapchain_presenter_;
-    context_changed_t context_changed_;
-    update_command_t update_command_;
-
-  public:
     explicit GraphicsRenderer(WindowConfig const &info);
 
     GraphicsRenderer(WindowConfig const &info, Config const &settings);
@@ -48,6 +40,10 @@ class GraphicsRenderer {
 
     DeviceContext const &get_device_context() const {
         return device_context_;
+    }
+
+    std::shared_ptr<AllocatorInterface> const &get_allocator() const {
+        return allocator_;
     }
 
     void set_context_changed_callback(context_changed_t const &callback) {
@@ -81,9 +77,20 @@ class GraphicsRenderer {
 
     void wait_device() const;
 
-    SwapchainContext::Config get_swapchain_context_info() const;
+    SwapchainContext::Info get_swapchain_context_info() const;
 
     VkPresentModeKHR get_supported_present_mode() const;
 
     VkSurfaceFormatKHR get_supported_surface_format() const;
+
+    VkFormat get_supported_depth_format() const;
+
+    Config config_;
+    InstanceContext instance_context_;
+    DeviceContext device_context_;
+    std::shared_ptr<AllocatorInterface> allocator_;
+    SwapchainContext swapchain_context_;
+    SwapchainPresenter swapchain_presenter_;
+    context_changed_t context_changed_;
+    update_command_t update_command_;
 };

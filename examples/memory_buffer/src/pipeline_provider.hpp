@@ -6,10 +6,10 @@
 
 #include "graphics/allocator_interface.hpp"
 #include "graphics/commander.hpp"
+#include "graphics/descriptor_set.hpp"
+#include "graphics/graphics_renderer.hpp"
 #include "graphics/pipeline_builder.hpp"
 #include "graphics/shader_context.hpp"
-#include "graphics/graphics_renderer.hpp"
-#include "graphics/descriptor_set.hpp"
 
 class PipelineProvider {
     std::shared_ptr<AllocatorInterface> allocator_;
@@ -26,7 +26,11 @@ class PipelineProvider {
     unique_ptr_of<VkPipeline> pipeline_;
 
   public:
-    PipelineProvider(shared_ptr_of<VkDevice> device, VkPhysicalDevice phys_device, uint32_t transfer_qfm, uint32_t graphics_qfm);
+    PipelineProvider(shared_ptr_of<VkDevice> device,
+                     VkPhysicalDevice phys_device,
+                     uint32_t transfer_qfm,
+                     uint32_t graphics_qfm,
+                     std::shared_ptr<AllocatorInterface> allocator);
 
     void update_command_buffer(VkCommandBuffer command_buffer, size_t image_index);
 

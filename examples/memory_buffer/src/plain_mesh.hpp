@@ -8,7 +8,7 @@
 #include <vector>
 
 class PlainMesh {
-    std::vector<Vertex2d> vertices_;
+    std::vector<Vertex3d> vertices_;
     std::vector<uint16_t> indices_;
     MemoryBuffer vertex_buffer_;
     MemoryBuffer index_buffer_;

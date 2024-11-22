@@ -1,9 +1,9 @@
-#include "texture_image.hpp"
+#include "image_texture.hpp"
 
 #include "graphics_error.hpp"
 #include "graphics_manager.hpp"
 
-TextureImage::TextureImage(shared_ptr_of<VkDevice> device,
+ImageTexture::ImageTexture(shared_ptr_of<VkDevice> device,
                            std::shared_ptr<AllocatorInterface> allocator,
                            VkMemoryAllocateFlags flags,
                            uint32_t width,
@@ -40,11 +40,11 @@ TextureImage::TextureImage(shared_ptr_of<VkDevice> device,
               reinterpret_cast<uintptr_t>(image_.get()),
               reinterpret_cast<uintptr_t>(memory),
               offset);
-    image_view_ = GraphicsManager::make_image_view(device, image_.get(), format);
+    image_view_ = GraphicsManager::make_image_view(device, image_.get(), format, VK_IMAGE_ASPECT_COLOR_BIT);
     sampler_ = GraphicsManager::make_sampler(device, 16);
 }
 
-TextureImage::~TextureImage() {
+ImageTexture::~ImageTexture() {
     if (allocator_) {
         allocator_->deallocate(block_);
     }

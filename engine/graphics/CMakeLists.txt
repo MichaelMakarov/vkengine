@@ -2,12 +2,14 @@ add_library(
     engine_graphics STATIC
     buffer_copy_command.cpp
     commander.cpp
+    depth_texture.cpp
     descriptor_set.cpp
     device_context.cpp 
     graphics_manager.cpp 
     graphics_renderer.cpp 
     image_copy_command.cpp
     image_renderer.cpp 
+    image_transition_command.cpp
     instance_context.cpp 
     memory_barrier.cpp
     memory_barrier_command.cpp
@@ -18,7 +20,7 @@ add_library(
     shader_context.cpp
     swapchain_context.cpp 
     swapchain_presenter.cpp 
-    texture_image.cpp
+    image_texture.cpp
     commander.cpp
     window_context.cpp
 )

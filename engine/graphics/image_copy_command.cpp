@@ -12,6 +12,7 @@ ImageCopyCommand::ImageCopyCommand(VkBuffer buffer, VkImage image, uint32_t widt
 
 void ImageCopyCommand::execute(VkCommandBuffer command_buffer) {
     VkImageMemoryBarrier barrier = MemoryBarrier::make_image_barrier(image_,
+                                                                     VK_IMAGE_ASPECT_COLOR_BIT,
                                                                      MemoryBarrier::ImageInfo{
                                                                          .access_mask = 0,
                                                                          .layout = VK_IMAGE_LAYOUT_UNDEFINED,
@@ -47,16 +48,4 @@ void ImageCopyCommand::execute(VkCommandBuffer command_buffer) {
         .imageExtent = VkExtent3D{.width = width_, .height = height_, .depth = 1},
     };
     vkCmdCopyBufferToImage(command_buffer, buffer_, image_, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-    // barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-    // barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-    // vkCmdPipelineBarrier(command_buffer,
-    //                      VK_PIPELINE_STAGE_TRANSFER_BIT,
-    //                      VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-    //                      0,
-    //                      0,
-    //                      nullptr,
-    //                      0,
-    //                      nullptr,
-    //                      1,
-    //                      &barrier);
 }

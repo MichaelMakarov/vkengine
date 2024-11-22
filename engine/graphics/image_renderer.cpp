@@ -19,8 +19,8 @@ VkCommandBuffer ImageRenderer::begin_render_pass() {
             .renderPass = render_pass_,
             .framebuffer = framebuffer_,
             .renderArea = rect_,
-            .clearValueCount = 1,
-            .pClearValues = &clear_value,
+            .clearValueCount = static_cast<uint32_t>(clear_values_.size()),
+            .pClearValues = clear_values_.data(),
         };
         vkCmdBeginRenderPass(command_buffer_, &begin_info, VkSubpassContents::VK_SUBPASS_CONTENTS_INLINE);
     }

@@ -2,7 +2,7 @@
 
 #include "allocator_interface.hpp"
 
-class TextureImage {
+class ImageTexture {
     VkDevice device_;
     std::shared_ptr<AllocatorInterface> allocator_;
     MemoryBlock block_;
@@ -13,19 +13,19 @@ class TextureImage {
   public:
     static constexpr VkFormat default_format = VK_FORMAT_R8G8B8A8_UNORM;
 
-    TextureImage(shared_ptr_of<VkDevice> device,
+    ImageTexture(shared_ptr_of<VkDevice> device,
                  std::shared_ptr<AllocatorInterface> allocator,
                  VkMemoryAllocateFlags flags,
                  uint32_t width,
                  uint32_t height,
                  VkFormat format = VK_FORMAT_R8G8B8A8_UNORM);
 
-    TextureImage() = default;
-    TextureImage(TextureImage &&) noexcept = default;
+    ImageTexture() = default;
+    ImageTexture(ImageTexture &&) noexcept = default;
 
-    ~TextureImage();
+    ~ImageTexture();
 
-    TextureImage &operator=(TextureImage &&) noexcept = default;
+    ImageTexture &operator=(ImageTexture &&) noexcept = default;
 
     VkImage get_image() const {
         return image_.get();

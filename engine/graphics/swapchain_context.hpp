@@ -1,53 +1,76 @@
 #pragma once
 
+#include "allocator_interface.hpp"
+#include "depth_texture.hpp"
 #include "image_context.hpp"
 #include "image_renderer.hpp"
 
+#include <optional>
 #include <vector>
 
 class SwapchainContext {
-  public:
-    struct Config {
-        VkSurfaceKHR surface;
-        VkSurfaceFormatKHR surface_format;
-        VkPresentModeKHR present_mode;
-        VkSurfaceTransformFlagBitsKHR pre_transform;
-        VkCompositeAlphaFlagBitsKHR composite_alpha;
-        VkImageUsageFlags image_usage;
-        uint32_t images_count;
-        uint32_t graphics_qfm;
-        uint32_t present_qfm;
-    };
-
-  private:
     class IndexSequence {
         size_t size_;
         size_t index_;
 
       public:
-        IndexSequence(size_t size = 0)
-            : size_{size}
-            , index_{0} {
-        }
+        IndexSequence(size_t size = 0);
 
-        size_t get_index() {
-            size_t index = index_++;
-            index_ %= size_;
-            return index;
-        }
+        size_t get_index();
+    };
+
+    class QfmContainer {
+        uint32_t array_[2];
+        uint32_t size_;
+
+      public:
+        QfmContainer(uint32_t graphics_qfm, uint32_t present_qfm);
+
+        uint32_t const *data() const;
+
+        uint32_t size() const;
     };
 
     shared_ptr_of<VkDevice> device_;
     shared_ptr_of<VkCommandPool> command_pool_;
-    std::vector<uint32_t> qfm_indices_;
-    VkSwapchainCreateInfoKHR swapchain_info_;
     unique_ptr_of<VkSwapchainKHR> swapchain_;
     unique_ptr_of<VkRenderPass> render_pass_;
-    std::vector<ImageContext> image_contexts_;
+    QfmContainer qfm_indices_;
+    std::unique_ptr<DepthTexture> depth_texture_;
     IndexSequence index_sequence_;
+    VkSwapchainCreateInfoKHR swapchain_info_;
+    VkAttachmentDescription color_attachment_;
+    std::vector<VkAttachmentDescription> attachment_descriptions_;
+    std::vector<VkAttachmentReference> color_attachments_;
+    VkAttachmentReference depth_attachement_;
+    std::vector<VkClearValue> clear_values_;
+    VkSubpassDescription subpass_;
+    VkSubpassDependency dependency_;
+    VkRenderPassCreateInfo render_pass_info_;
+    std::vector<ImageContext> image_contexts_;
 
   public:
-    SwapchainContext(shared_ptr_of<VkDevice> device, Config const &info);
+    struct Info {
+        struct SwapchainInfo {
+            VkSurfaceKHR surface;
+            VkSurfaceFormatKHR surface_format;
+            VkPresentModeKHR present_mode;
+            VkSurfaceTransformFlagBitsKHR pre_transform;
+            VkCompositeAlphaFlagBitsKHR composite_alpha;
+            VkImageUsageFlags image_usage;
+            uint32_t images_count;
+            uint32_t graphics_qfm;
+            uint32_t present_qfm;
+        };
+        struct DepthInfo {
+            VkImageTiling depth_tiling;
+            VkFormat depth_format;
+        };
+        SwapchainInfo swapchain_info;
+        std::optional<DepthInfo> depth_info;
+    };
+
+    SwapchainContext(shared_ptr_of<VkDevice> device, std::shared_ptr<AllocatorInterface> allocator, Info const &info);
 
     ~SwapchainContext();
 
@@ -65,10 +88,7 @@ class SwapchainContext {
         return static_cast<uint32_t>(image_contexts_.size());
     }
 
-    void update_extent(VkExtent2D extent);
+    void update_extent(VkExtent2D extent, VkQueue graphics_queue);
 
     std::vector<ImageRenderer> get_image_renderers() const;
-
-  private:
-    static std::vector<uint32_t> make_queue_family_indices(Config const &info);
 };

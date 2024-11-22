@@ -10,5 +10,5 @@ class MemoryBarrier {
         uint32_t qfm_index = VK_QUEUE_FAMILY_IGNORED;
     };
 
-    static VkImageMemoryBarrier make_image_barrier(VkImage image, ImageInfo const &src_info, ImageInfo const &dst_info);
+    static VkImageMemoryBarrier make_image_barrier(VkImage image, VkImageAspectFlags aspect, ImageInfo const &src_info, ImageInfo const &dst_info);
 };

@@ -31,6 +31,12 @@ Commander::Commander(shared_ptr_of<VkDevice> device, uint32_t qfm_index, uint32_
     vkGetDeviceQueue(device.get(), qfm_index, queue_index, &queue_);
 }
 
+Commander::Commander(shared_ptr_of<VkDevice> device, shared_ptr_of<VkCommandPool> command_pool, VkQueue queue)
+    : device_{device}
+    , command_pool_{command_pool}
+    , queue_{queue} {
+}
+
 void Commander::add_command(std::unique_ptr<CommandInterface> command) {
     commands_.push_back(std::move(command));
 }

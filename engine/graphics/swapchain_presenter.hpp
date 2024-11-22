@@ -16,7 +16,7 @@ class SwapchainPresenter {
     update_frame_t frame_callback_;
 
   public:
-    SwapchainPresenter(shared_ptr_of<VkDevice> device, uint32_t graphics_qfm, uint32_t present_qfm);
+    SwapchainPresenter(shared_ptr_of<VkDevice> device, VkQueue graphics_queue, VkQueue present_queue);
 
     void submit_and_present(VkSwapchainKHR swapchain, ImageContext const &image_context);
 

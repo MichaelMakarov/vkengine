@@ -4,23 +4,24 @@
 
 #include <GLFW/glfw3.h>
 
+#include <span>
 #include <string_view>
 #include <vector>
 
 class GraphicsManager {
   public:
     static shared_ptr_of<VkInstance>
-    make_instance(char const *app_name, std::vector<char const *> const &extensions, std::vector<char const *> const &layers);
+    make_instance(char const *app_name, std::span<char const *const> extensions, std::span<char const *const> layers);
 
     static unique_ptr_of<VkDebugUtilsMessengerEXT> make_debug_messenger(shared_ptr_of<VkInstance> instance);
 
     static unique_ptr_of<VkSurfaceKHR> make_surface(shared_ptr_of<VkInstance> instance, GLFWwindow *window);
 
     static shared_ptr_of<VkDevice> make_device(VkPhysicalDevice phys_device,
-                                               std::vector<VkDeviceQueueCreateInfo> const &queue_infos,
-                                               std::vector<char const *> const &extension_names);
+                                               std::span<VkDeviceQueueCreateInfo const> queue_infos,
+                                               std::span<char const *const> extension_names);
 
-    static unique_ptr_of<VkRenderPass> make_render_pass(shared_ptr_of<VkDevice> device, VkFormat format);
+    static unique_ptr_of<VkRenderPass> make_render_pass(shared_ptr_of<VkDevice> device, VkRenderPassCreateInfo const &info);
 
     static unique_ptr_of<VkSwapchainKHR> make_swapchain(shared_ptr_of<VkDevice> device, VkSwapchainCreateInfoKHR const &swapchain_info);
 
@@ -31,10 +32,14 @@ class GraphicsManager {
 
     static unique_ptr_of<VkCommandBuffer> make_command_buffer(shared_ptr_of<VkDevice> device, shared_ptr_of<VkCommandPool> command_pool);
 
-    static unique_ptr_of<VkFramebuffer>
-    make_framebuffer(shared_ptr_of<VkDevice> device, VkImageView image_view, VkRenderPass render_pass, VkFormat format, VkExtent2D extent);
+    static unique_ptr_of<VkFramebuffer> make_framebuffer(shared_ptr_of<VkDevice> device,
+                                                         std::span<VkImageView const> image_views,
+                                                         VkRenderPass render_pass,
+                                                         VkFormat format,
+                                                         VkExtent2D extent);
 
-    static unique_ptr_of<VkImageView> make_image_view(shared_ptr_of<VkDevice> device, VkImage image, VkFormat format);
+    static unique_ptr_of<VkImageView>
+    make_image_view(shared_ptr_of<VkDevice> device, VkImage image, VkFormat format, VkImageAspectFlags aspect);
 
     static shared_ptr_of<VkDeviceMemory> make_device_memory(shared_ptr_of<VkDevice> device, size_t size, uint32_t type_index);
 
@@ -43,19 +48,19 @@ class GraphicsManager {
     static unique_ptr_of<VkSemaphore> make_semaphore(shared_ptr_of<VkDevice> device);
 
     static unique_ptr_of<VkPipelineLayout> make_pipeline_layout(shared_ptr_of<VkDevice> device,
-                                                                std::vector<VkDescriptorSetLayout> const &set_layouts,
-                                                                std::vector<VkPushConstantRange> const &push_constant_ranges);
+                                                                std::span<VkDescriptorSetLayout const> set_layouts,
+                                                                std::span<VkPushConstantRange const> push_constant_ranges);
 
     static unique_ptr_of<VkPipeline> make_pipeline(shared_ptr_of<VkDevice> device, VkGraphicsPipelineCreateInfo const &pipeline_info);
 
     static unique_ptr_of<VkDescriptorSetLayout> make_descriptor_set_layout(shared_ptr_of<VkDevice> device,
-                                                                           std::vector<VkDescriptorSetLayoutBinding> const &bindings);
+                                                                           std::span<VkDescriptorSetLayoutBinding const> bindings);
 
     static unique_ptr_of<VkDescriptorPool>
-    make_descriptor_pool(shared_ptr_of<VkDevice> device, uint32_t max_sets_count, std::vector<VkDescriptorPoolSize> const &pool_sizes);
+    make_descriptor_pool(shared_ptr_of<VkDevice> device, uint32_t max_sets_count, std::span<VkDescriptorPoolSize const> pool_sizes);
 
     static std::vector<VkDescriptorSet>
-    allocate_descriptor_sets(shared_ptr_of<VkDevice> device, VkDescriptorPool pool, std::vector<VkDescriptorSetLayout> const &layouts);
+    allocate_descriptor_sets(shared_ptr_of<VkDevice> device, VkDescriptorPool pool, std::span<VkDescriptorSetLayout const> layouts);
 
     static unique_ptr_of<VkImage> make_image(shared_ptr_of<VkDevice> device, VkImageCreateInfo const &info);
 

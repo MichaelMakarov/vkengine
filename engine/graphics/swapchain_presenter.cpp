@@ -9,11 +9,11 @@ namespace {
 
 }
 
-SwapchainPresenter::SwapchainPresenter(shared_ptr_of<VkDevice> device, uint32_t graphics_qfm, uint32_t present_qfm)
+SwapchainPresenter::SwapchainPresenter(shared_ptr_of<VkDevice> device, VkQueue graphics_queue, VkQueue present_queue)
     : device_{device}
-    , sync_fence_{GraphicsManager::make_fence(device)} {
-    vkGetDeviceQueue(device.get(), graphics_qfm, 0, &graphics_queue_);
-    vkGetDeviceQueue(device.get(), present_qfm, 0, &present_queue_);
+    , sync_fence_{GraphicsManager::make_fence(device)}
+    , graphics_queue_{graphics_queue}
+    , present_queue_{present_queue} {
 }
 
 void SwapchainPresenter::submit_and_present(VkSwapchainKHR swapchain, ImageContext const &image_context) {

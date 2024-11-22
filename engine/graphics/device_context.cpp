@@ -148,6 +148,12 @@ namespace {
         }
     };
 
+    VkQueue get_device_queue(VkDevice device, uint32_t qfm_index, uint32_t queue_index) {
+        VkQueue queue;
+        vkGetDeviceQueue(device, qfm_index, queue_index, &queue);
+        return queue;
+    }
+
 } // namespace
 
 DeviceContext::DeviceContext(VkInstance instance, VkSurfaceKHR surface) {
@@ -245,4 +251,20 @@ DeviceContext::DeviceContext(VkInstance instance, VkSurfaceKHR surface) {
     }
     std::vector<char const *> extension_names{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
     device_ = GraphicsManager::make_device(phys_device_, queue_infos, extension_names);
+}
+
+VkQueue DeviceContext::get_graphics_queue() const {
+    return get_device_queue(device_.get(), graphics_qfm_.index, 0);
+}
+
+VkQueue DeviceContext::get_present_queue() const {
+    return get_device_queue(device_.get(), present_qfm_.index, 0);
+}
+
+VkQueue DeviceContext::get_compute_queue() const {
+    return get_device_queue(device_.get(), compute_qfm_.index, 0);
+}
+
+VkQueue DeviceContext::get_transfer_queue() const {
+    return get_device_queue(device_.get(), transfer_qfm_.index, 0);
 }

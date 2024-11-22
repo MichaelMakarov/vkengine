@@ -43,4 +43,12 @@ class DeviceContext {
     uint32_t get_transfer_qfm() const {
         return transfer_qfm_.index;
     }
+
+    VkQueue get_graphics_queue() const;
+
+    VkQueue get_present_queue() const;
+
+    VkQueue get_compute_queue() const;
+
+    VkQueue get_transfer_queue() const;
 };

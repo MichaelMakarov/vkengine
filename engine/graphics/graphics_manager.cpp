@@ -47,7 +47,7 @@ namespace {
 } // namespace
 
 shared_ptr_of<VkInstance>
-GraphicsManager::make_instance(char const *app_name, std::vector<char const *> const &extensions, std::vector<char const *> const &layers) {
+GraphicsManager::make_instance(char const *app_name, std::span<char const *const> extensions, std::span<char const *const> layers) {
     VkApplicationInfo app_info{
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
         .pApplicationName = app_name,
@@ -59,9 +59,9 @@ GraphicsManager::make_instance(char const *app_name, std::vector<char const *> c
     VkInstanceCreateInfo instance_info{
         .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
         .pApplicationInfo = &app_info,
-        .enabledLayerCount = static_cast<std::uint32_t>(layers.size()),
+        .enabledLayerCount = static_cast<uint32_t>(layers.size()),
         .ppEnabledLayerNames = layers.data(),
-        .enabledExtensionCount = static_cast<std::uint32_t>(extensions.size()),
+        .enabledExtensionCount = static_cast<uint32_t>(extensions.size()),
         .ppEnabledExtensionNames = extensions.data(),
     };
     VkInstance instance;
@@ -113,8 +113,8 @@ unique_ptr_of<VkSurfaceKHR> GraphicsManager::make_surface(shared_ptr_of<VkInstan
 }
 
 shared_ptr_of<VkDevice> GraphicsManager::make_device(VkPhysicalDevice phys_device,
-                                                     std::vector<VkDeviceQueueCreateInfo> const &queue_infos,
-                                                     std::vector<char const *> const &extension_names) {
+                                                     std::span<VkDeviceQueueCreateInfo const> queue_infos,
+                                                     std::span<char const *const> extension_names) {
     VkPhysicalDeviceFeatures features;
     vkGetPhysicalDeviceFeatures(phys_device, &features);
     VkDeviceCreateInfo info{
@@ -133,44 +133,7 @@ shared_ptr_of<VkDevice> GraphicsManager::make_device(VkPhysicalDevice phys_devic
     });
 }
 
-unique_ptr_of<VkRenderPass> GraphicsManager::make_render_pass(shared_ptr_of<VkDevice> device, VkFormat format) {
-    VkAttachmentDescription attachment{
-        .format = format,
-        .samples = VK_SAMPLE_COUNT_1_BIT,
-        .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-        .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-        .stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
-        .stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
-        .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-    };
-    VkAttachmentReference color_attachment{
-        .attachment = 0,
-        .layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-    };
-    VkSubpassDescription subpass{
-        .pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS,
-        .colorAttachmentCount = 1,
-        .pColorAttachments = &color_attachment,
-    };
-    VkSubpassDependency dependency{
-        .srcSubpass = VK_SUBPASS_EXTERNAL,
-        .dstSubpass = 0,
-        .srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-        .srcAccessMask = 0,
-        .dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-    };
-    VkRenderPassCreateInfo info{
-        .sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO,
-        .attachmentCount = 1,
-        .pAttachments = &attachment,
-        .subpassCount = 1,
-        .pSubpasses = &subpass,
-        .dependencyCount = 1,
-        .pDependencies = &dependency,
-    };
-
+unique_ptr_of<VkRenderPass> GraphicsManager::make_render_pass(shared_ptr_of<VkDevice> device, VkRenderPassCreateInfo const &info) {
     VkRenderPass render_pass;
     vk_assert(vkCreateRenderPass(device.get(), &info, nullptr, &render_pass), "Failed to create a render pass.");
     return unique_ptr_of<VkRenderPass>(render_pass, [device](VkRenderPass render_pass) {
@@ -179,10 +142,9 @@ unique_ptr_of<VkRenderPass> GraphicsManager::make_render_pass(shared_ptr_of<VkDe
     });
 }
 
-unique_ptr_of<VkSwapchainKHR> GraphicsManager::make_swapchain(shared_ptr_of<VkDevice> device,
-                                                              VkSwapchainCreateInfoKHR const &swapchain_info) {
+unique_ptr_of<VkSwapchainKHR> GraphicsManager::make_swapchain(shared_ptr_of<VkDevice> device, VkSwapchainCreateInfoKHR const &info) {
     VkSwapchainKHR swapchain;
-    vk_assert(vkCreateSwapchainKHR(device.get(), &swapchain_info, nullptr, &swapchain), "Failed to create a swapchain.");
+    vk_assert(vkCreateSwapchainKHR(device.get(), &info, nullptr, &swapchain), "Failed to create a swapchain.");
     return unique_ptr_of<VkSwapchainKHR>(swapchain, [device](VkSwapchainKHR swapchain) {
         debug_println("delete swapchain");
         vkDestroySwapchainKHR(device.get(), swapchain, nullptr);
@@ -238,15 +200,15 @@ unique_ptr_of<VkCommandBuffer> GraphicsManager::make_command_buffer(shared_ptr_o
 }
 
 unique_ptr_of<VkFramebuffer> GraphicsManager::make_framebuffer(shared_ptr_of<VkDevice> device,
-                                                               VkImageView image_view,
+                                                               std::span<VkImageView const> image_views,
                                                                VkRenderPass render_pass,
                                                                VkFormat format,
                                                                VkExtent2D extent) {
     VkFramebufferCreateInfo framebuffer_info{
         .sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO,
         .renderPass = render_pass,
-        .attachmentCount = 1,
-        .pAttachments = &image_view,
+        .attachmentCount = static_cast<uint32_t>(image_views.size()),
+        .pAttachments = image_views.data(),
         .width = extent.width,
         .height = extent.height,
         .layers = 1,
@@ -259,7 +221,8 @@ unique_ptr_of<VkFramebuffer> GraphicsManager::make_framebuffer(shared_ptr_of<VkD
     });
 }
 
-unique_ptr_of<VkImageView> GraphicsManager::make_image_view(shared_ptr_of<VkDevice> device, VkImage image, VkFormat format) {
+unique_ptr_of<VkImageView>
+GraphicsManager::make_image_view(shared_ptr_of<VkDevice> device, VkImage image, VkFormat format, VkImageAspectFlags aspect) {
     VkImageViewCreateInfo image_view_info{
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
         .image = image,
@@ -274,7 +237,7 @@ unique_ptr_of<VkImageView> GraphicsManager::make_image_view(shared_ptr_of<VkDevi
             },
         .subresourceRange =
             VkImageSubresourceRange{
-                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .aspectMask = aspect,
                 .baseMipLevel = 0,
                 .levelCount = 1,
                 .baseArrayLayer = 0,
@@ -329,8 +292,8 @@ unique_ptr_of<VkSemaphore> GraphicsManager::make_semaphore(shared_ptr_of<VkDevic
 }
 
 unique_ptr_of<VkPipelineLayout> GraphicsManager::make_pipeline_layout(shared_ptr_of<VkDevice> device,
-                                                                      std::vector<VkDescriptorSetLayout> const &set_layouts,
-                                                                      std::vector<VkPushConstantRange> const &push_constant_ranges) {
+                                                                      std::span<VkDescriptorSetLayout const> set_layouts,
+                                                                      std::span<VkPushConstantRange const> push_constant_ranges) {
     VkPipelineLayoutCreateInfo layout_info{
         .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
         .setLayoutCount = static_cast<uint32_t>(set_layouts.size()),
@@ -357,7 +320,7 @@ unique_ptr_of<VkPipeline> GraphicsManager::make_pipeline(shared_ptr_of<VkDevice>
 }
 
 unique_ptr_of<VkDescriptorSetLayout>
-GraphicsManager::make_descriptor_set_layout(shared_ptr_of<VkDevice> device, std::vector<VkDescriptorSetLayoutBinding> const &bindings) {
+GraphicsManager::make_descriptor_set_layout(shared_ptr_of<VkDevice> device, std::span<VkDescriptorSetLayoutBinding const> bindings) {
     VkDescriptorSetLayoutCreateInfo info{
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
         .bindingCount = static_cast<uint32_t>(bindings.size()),
@@ -373,7 +336,7 @@ GraphicsManager::make_descriptor_set_layout(shared_ptr_of<VkDevice> device, std:
 
 unique_ptr_of<VkDescriptorPool> GraphicsManager::make_descriptor_pool(shared_ptr_of<VkDevice> device,
                                                                       uint32_t max_sets_count,
-                                                                      std::vector<VkDescriptorPoolSize> const &pool_sizes) {
+                                                                      std::span<VkDescriptorPoolSize const> pool_sizes) {
     VkDescriptorPoolCreateInfo info{
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
         .maxSets = max_sets_count,
@@ -390,7 +353,7 @@ unique_ptr_of<VkDescriptorPool> GraphicsManager::make_descriptor_pool(shared_ptr
 
 std::vector<VkDescriptorSet> GraphicsManager::allocate_descriptor_sets(shared_ptr_of<VkDevice> device,
                                                                        VkDescriptorPool pool,
-                                                                       std::vector<VkDescriptorSetLayout> const &layouts) {
+                                                                       std::span<VkDescriptorSetLayout const> layouts) {
     VkDescriptorSetAllocateInfo info{
         .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
         .descriptorPool = pool,

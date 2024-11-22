@@ -13,28 +13,50 @@ namespace {
 
 PlainMesh::PlainMesh(shared_ptr_of<VkDevice> device, std::shared_ptr<AllocatorInterface> allocator, Commander &transfer) {
     vertices_ = {
-        Vertex2d{
-            .point = glm::vec2(-0.5f, 0.5f),
+        /* first plane */
+        Vertex3d{
+            .point = glm::vec3(-0.5f, 0.5f, 0.0f),
             .color = glm::vec3(1.0f, 0.0f, 0.0f),
             .texture = glm::vec2(1.0f, 0.0f),
         },
-        Vertex2d{
-            .point = glm::vec2(0.5f, 0.5f),
+        Vertex3d{
+            .point = glm::vec3(0.5f, 0.5f, 0.0f),
             .color = glm::vec3(0.0f, 1.0f, 0.0f),
             .texture = glm::vec2(0.0f, 0.0f),
         },
-        Vertex2d{
-            .point = glm::vec2(0.5f, -0.5f),
+        Vertex3d{
+            .point = glm::vec3(0.5f, -0.5f, 0.0f),
             .color = glm::vec3(0.0f, 0.0f, 1.0f),
             .texture = glm::vec2(0.0f, 1.0f),
         },
-        Vertex2d{
-            .point = glm::vec2(-0.5f, -0.5f),
+        Vertex3d{
+            .point = glm::vec3(-0.5f, -0.5f, 0.0f),
+            .color = glm::vec3(1.0f, 1.0f, 1.0f),
+            .texture = glm::vec2(1.0f, 1.0f),
+        },
+        /* second plane */
+        Vertex3d{
+            .point = glm::vec3(-0.5f, 0.5f, -0.5f),
+            .color = glm::vec3(1.0f, 0.0f, 0.0f),
+            .texture = glm::vec2(1.0f, 0.0f),
+        },
+        Vertex3d{
+            .point = glm::vec3(0.5f, 0.5f, -0.5f),
+            .color = glm::vec3(0.0f, 1.0f, 0.0f),
+            .texture = glm::vec2(0.0f, 0.0f),
+        },
+        Vertex3d{
+            .point = glm::vec3(0.5f, -0.5f, -0.5f),
+            .color = glm::vec3(0.0f, 0.0f, 1.0f),
+            .texture = glm::vec2(0.0f, 1.0f),
+        },
+        Vertex3d{
+            .point = glm::vec3(-0.5f, -0.5f, -0.5f),
             .color = glm::vec3(1.0f, 1.0f, 1.0f),
             .texture = glm::vec2(1.0f, 1.0f),
         },
     };
-    indices_ = {0, 2, 1, 2, 0, 3};
+    indices_ = {/* first plane */ 0, 2, 1, 2, 0, 3, /* second plane */ 4, 6, 5, 6, 4, 7};
     vertex_buffer_ = MemoryBuffer(device,
                                   allocator,
                                   VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -57,8 +79,10 @@ PlainMesh::PlainMesh(shared_ptr_of<VkDevice> device, std::shared_ptr<AllocatorIn
                               VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
     vertex_buffer.fill(vertices_.data(), get_data_size(vertices_));
     index_buffer.fill(indices_.data(), get_data_size(indices_));
-    transfer.add_command(std::make_unique<BufferCopyCommand>(vertex_buffer.get_buffer(), vertex_buffer_.get_buffer(), vertex_buffer.get_size()));
-    transfer.add_command(std::make_unique<BufferCopyCommand>(index_buffer.get_buffer(), index_buffer_.get_buffer(), index_buffer.get_size()));
+    transfer.add_command(
+        std::make_unique<BufferCopyCommand>(vertex_buffer.get_buffer(), vertex_buffer_.get_buffer(), vertex_buffer.get_size()));
+    transfer.add_command(
+        std::make_unique<BufferCopyCommand>(index_buffer.get_buffer(), index_buffer_.get_buffer(), index_buffer.get_size()));
     transfer.execute();
 }
 
@@ -71,10 +95,10 @@ void PlainMesh::draw(VkCommandBuffer command_buffer) const {
 }
 
 VkVertexInputBindingDescription PlainMesh::get_vertex_binding_description() const {
-    return Vertex2d::get_binding_description(0);
+    return Vertex3d::get_binding_description(0);
 }
 
 std::vector<VkVertexInputAttributeDescription> PlainMesh::get_vertex_attribute_descriptions() const {
-    auto vertex_attributes = Vertex2d::get_attribute_description(0);
+    auto vertex_attributes = Vertex3d::get_attribute_description(0);
     return std::vector<VkVertexInputAttributeDescription>(vertex_attributes.begin(), vertex_attributes.end());
 }

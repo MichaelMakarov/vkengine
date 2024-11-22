@@ -1,11 +1,13 @@
 #include "graphics_renderer.hpp"
 
 #include "graphics_error.hpp"
+#include "memory_list_allocator.hpp"
 #include "window_context.hpp"
 
 #include <GLFW/glfw3.h>
 
 #include <algorithm>
+#include <array>
 
 inline bool operator==(VkSurfaceFormatKHR left, VkSurfaceFormatKHR right) {
     return left.colorSpace == right.colorSpace && left.format == right.format;
@@ -22,6 +24,17 @@ namespace {
         return std::max(min, std::min(value, max));
     }
 
+    char const *tiling_to_str(VkImageTiling tiling) {
+        switch (tiling) {
+        case VK_IMAGE_TILING_OPTIMAL:
+            return "optimal tiling";
+        case VK_IMAGE_TILING_LINEAR:
+            return "linear tiling";
+        default:
+            return "unknown tiling";
+        }
+    }
+
 } // namespace
 
 GraphicsRenderer::GraphicsRenderer(WindowConfig const &info)
@@ -32,8 +45,9 @@ GraphicsRenderer::GraphicsRenderer(WindowConfig const &info, Config const &setti
     : config_{settings}
     , instance_context_{info}
     , device_context_{instance_context_.get_instance(), instance_context_.get_surface()}
-    , swapchain_context_{device_context_.get_device(), get_swapchain_context_info()}
-    , swapchain_presenter_{device_context_.get_device(), device_context_.get_graphics_qfm(), device_context_.get_present_qfm()} {
+    , allocator_{std::make_shared<MemoryListAllocator>(device_context_.get_device(), device_context_.get_physical_device())}
+    , swapchain_context_{device_context_.get_device(), allocator_, get_swapchain_context_info()}
+    , swapchain_presenter_{device_context_.get_device(), device_context_.get_graphics_queue(), device_context_.get_present_queue()} {
     auto window_ctx = WindowContext::get_window_context(instance_context_.get_window());
     window_ctx->set_resize_callback(std::bind(&GraphicsRenderer::on_window_resized, this, std::placeholders::_1, std::placeholders::_2));
 }
@@ -77,7 +91,7 @@ void GraphicsRenderer::on_window_resized(int width, int height) {
         return;
     }
     VkSurfaceCapabilitiesKHR surface_capabilities = get_surface_capabilities();
-    swapchain_context_.update_extent(surface_capabilities.currentExtent);
+    swapchain_context_.update_extent(surface_capabilities.currentExtent, device_context_.get_graphics_queue());
     if (context_changed_) {
         context_changed_(Context{
             .render_pass = swapchain_context_.get_render_pass(),
@@ -123,24 +137,35 @@ void GraphicsRenderer::wait_device() const {
     vk_assert(vkDeviceWaitIdle(device_context_.get_device().get()), "Failed to wait idles.");
 }
 
-SwapchainContext::Config GraphicsRenderer::get_swapchain_context_info() const {
+SwapchainContext::Info GraphicsRenderer::get_swapchain_context_info() const {
     VkSurfaceCapabilitiesKHR surface_capabilities = get_surface_capabilities();
-    SwapchainContext::Config info;
-    info.surface = instance_context_.get_surface();
-    info.surface_format = get_supported_surface_format();
-    info.present_mode = get_supported_present_mode();
-    info.pre_transform = surface_capabilities.currentTransform;
-    info.composite_alpha = config_.composite_alpha;
-    info.image_usage = config_.image_usage;
-    info.images_count = std::min(surface_capabilities.maxImageCount, surface_capabilities.minImageCount + 1);
-    info.graphics_qfm = device_context_.get_graphics_qfm();
-    info.present_qfm = device_context_.get_present_qfm();
+    SwapchainContext::Info info;
+    info.swapchain_info = {
+        .surface = instance_context_.get_surface(),
+        .surface_format = get_supported_surface_format(),
+        .present_mode = get_supported_present_mode(),
+        .pre_transform = surface_capabilities.currentTransform,
+        .composite_alpha = config_.composite_alpha,
+        .image_usage = config_.image_usage,
+        .images_count = std::min(surface_capabilities.maxImageCount, surface_capabilities.minImageCount + 1),
+        .graphics_qfm = device_context_.get_graphics_qfm(),
+        .present_qfm = device_context_.get_present_qfm(),
+    };
+    if (config_.depth_buffering) {
+        info.depth_info = {
+            .depth_tiling = VK_IMAGE_TILING_OPTIMAL,
+            .depth_format = get_supported_depth_format(),
+        };
+    }
     return info;
 }
 
 VkPresentModeKHR GraphicsRenderer::get_supported_present_mode() const {
     uint32_t modes_count;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(device_context_.get_physical_device(), instance_context_.get_surface(), &modes_count, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device_context_.get_physical_device(),
+                                              instance_context_.get_surface(),
+                                              &modes_count,
+                                              nullptr);
     std::vector<VkPresentModeKHR> present_modes(modes_count);
     vkGetPhysicalDeviceSurfacePresentModesKHR(device_context_.get_physical_device(),
                                               instance_context_.get_surface(),
@@ -173,4 +198,32 @@ VkSurfaceFormatKHR GraphicsRenderer::get_supported_surface_format() const {
         return config_.surface_format;
     }
     return surface_formats.front();
+}
+
+VkFormat GraphicsRenderer::get_supported_depth_format() const {
+    std::array formats{
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D24_UNORM_S8_UINT,
+    };
+    VkFormatFeatureFlags feature = VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL;
+    VkPhysicalDevice device = device_context_.get_physical_device();
+    auto iter = std::find_if(formats.begin(), formats.end(), [feature, tiling, device](VkFormat format) {
+        VkFormatProperties properties;
+        vkGetPhysicalDeviceFormatProperties(device, format, &properties);
+        switch (tiling) {
+        case VK_IMAGE_TILING_OPTIMAL:
+            return (properties.optimalTilingFeatures & feature) == feature;
+        case VK_IMAGE_TILING_LINEAR:
+            return (properties.linearTilingFeatures & feature) == feature;
+        default:
+            return false;
+        }
+    });
+    if (iter == formats.end()) {
+        raise_error("Failed to find supported depth format: tiling={}.", tiling_to_str(tiling));
+    }
+    info_println("Found depth format {}", static_cast<int>(*iter));
+    return *iter;
 }

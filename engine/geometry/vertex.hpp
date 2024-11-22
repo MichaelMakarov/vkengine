@@ -19,9 +19,7 @@ struct Vertex3d {
     glm::vec3 point;
     glm::vec3 normal;
     glm::vec3 color;
-    struct {
-        uint8_t u, v;
-    } texture;
+    glm::vec2 texture;
 
     static VkVertexInputBindingDescription get_binding_description(uint32_t binding);
 

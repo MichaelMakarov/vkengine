@@ -1,13 +1,13 @@
 #include "pipeline_provider.hpp"
 
 #include "graphics/graphics_manager.hpp"
-#include "graphics/memory_list_allocator.hpp"
 
 PipelineProvider::PipelineProvider(shared_ptr_of<VkDevice> device,
                                    VkPhysicalDevice phys_device,
                                    uint32_t transfer_qfm,
-                                   uint32_t graphics_qfm)
-    : allocator_{std::make_shared<MemoryListAllocator>(device, phys_device)}
+                                   uint32_t graphics_qfm,
+                                   std::shared_ptr<AllocatorInterface> allocator)
+    : allocator_{allocator}
     , transfer_{device, transfer_qfm, 0}
     , barrier_{device, graphics_qfm, 0}
     , mesh_{device, allocator_, transfer_}
@@ -17,13 +17,27 @@ PipelineProvider::PipelineProvider(shared_ptr_of<VkDevice> device,
     , builder_{device}
     , vertex_shader_{device, "shader.vert.spv", VK_SHADER_STAGE_VERTEX_BIT}
     , fragment_shader_{device, "shader.frag.spv", VK_SHADER_STAGE_FRAGMENT_BIT}
-    , pipeline_layout_{GraphicsManager::make_pipeline_layout(device, {descriptor_set_.get_layout()}, {})} {
+    , pipeline_layout_{
+          GraphicsManager::make_pipeline_layout(device, std::array<VkDescriptorSetLayout, 1>{descriptor_set_.get_layout()}, {})} {
     builder_.set_shader_stages({vertex_shader_.get_shader_stage(), fragment_shader_.get_shader_stage()});
     builder_.set_pipeline_layout(pipeline_layout_);
     VertexInputStateProvider vertex_input_state;
     vertex_input_state.set_vertex_bindings({mesh_.get_vertex_binding_description()});
     vertex_input_state.set_vertex_attributes(mesh_.get_vertex_attribute_descriptions());
     builder_.set_vertex_input_state(std::move(vertex_input_state));
+    builder_.set_depth_stencil_state(VkPipelineDepthStencilStateCreateInfo{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO,
+        .depthTestEnable = VK_TRUE,
+        .depthWriteEnable = VK_TRUE,
+        .depthCompareOp = VK_COMPARE_OP_LESS,
+        .depthBoundsTestEnable = VK_FALSE,
+        .stencilTestEnable = VK_FALSE,
+        .front = {},
+        .back = {},
+        .minDepthBounds = 0,
+        .maxDepthBounds = 1,
+
+    });
 }
 
 void PipelineProvider::update_command_buffer(VkCommandBuffer command_buffer, size_t image_index) {
