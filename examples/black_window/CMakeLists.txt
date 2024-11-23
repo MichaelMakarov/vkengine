@@ -1,7 +1,7 @@
 add_executable(
-    black_window 
+    black_window_example
     main.cpp
 )
 target_link_libraries(
-    black_window PRIVATE engine
+    black_window_example PRIVATE engine
 )

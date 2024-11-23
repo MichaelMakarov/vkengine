@@ -1,6 +1,7 @@
 add_library(
     engine_geometry STATIC 
     vertex.cpp
+    mesh_reader.cpp
 )
 target_include_directories(
     engine_geometry PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}

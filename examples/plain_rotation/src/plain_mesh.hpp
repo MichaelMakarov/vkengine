@@ -1,15 +1,21 @@
 #pragma once
 
-#include "geometry/vertex.hpp"
+#include "geometry/mesh.hpp"
 #include "graphics/allocator_interface.hpp"
-#include "graphics/memory_buffer.hpp"
 #include "graphics/commander.hpp"
+#include "graphics/memory_buffer.hpp"
+
+#include <glm/glm.hpp>
 
 #include <vector>
 
 class PlainMesh {
-    std::vector<Vertex3d> vertices_;
-    std::vector<uint16_t> indices_;
+    struct Vertex {
+        glm::vec3 point;
+        glm::vec3 color;
+        glm::vec2 texture;
+    };
+    Mesh<Vertex, uint16_t> mesh_;
     MemoryBuffer vertex_buffer_;
     MemoryBuffer index_buffer_;
 

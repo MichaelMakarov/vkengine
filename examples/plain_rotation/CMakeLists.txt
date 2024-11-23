@@ -1,5 +1,5 @@
 add_executable(
-    memory_buffer
+    plain_rotation_example
     src/main.cpp
     src/matrix_descriptor.cpp
     src/pipeline_provider.cpp
@@ -7,7 +7,9 @@ add_executable(
     src/texture_descriptor.cpp
 )
 target_link_libraries(
-    memory_buffer PRIVATE engine
+    plain_rotation_example PRIVATE 
+    engine 
+    glm::glm
 )
-compile_shaders(memory_buffer)
+compile_shaders(plain_rotation_example)
 copy_images()

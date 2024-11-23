@@ -2,6 +2,8 @@
 
 #include "graphics/graphics_manager.hpp"
 
+#include <array>
+
 PipelineProvider::PipelineProvider(shared_ptr_of<VkDevice> device,
                                    VkPhysicalDevice phys_device,
                                    uint32_t transfer_qfm,
